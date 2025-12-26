@@ -12,6 +12,6 @@ suspend fun logout(accountName: String) {
     withContext<Any>(Dispatchers.IO) {
         // TODO: Create Info.sq and uncomment the following line
         // AppConstant.database.infoQueries.deleteOverviewByNickname(accountName)
-        AppConstant.database.userInfoQueries.deleteUserByName(accountName)
+        AppConstant.database.userDao().deleteUserByNickname(accountName)
     }
 }

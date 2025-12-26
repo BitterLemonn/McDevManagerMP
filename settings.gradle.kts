@@ -3,6 +3,8 @@ enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 pluginManagement {
     repositories {
+        // Maven Central（备用）
+        mavenCentral()
         // 阿里云 Maven 镜像（优先）
         maven("https://maven.aliyun.com/repository/public")
         // Google 的 Maven 仓库（备用）
@@ -13,8 +15,6 @@ pluginManagement {
                 includeGroupAndSubgroups("com.google")
             }
         }
-        // Maven Central（备用）
-        mavenCentral()
         gradlePluginPortal()
         maven { setUrl("https://jitpack.io")  }
     }
@@ -22,6 +22,8 @@ pluginManagement {
 
 dependencyResolutionManagement {
     repositories {
+        // Maven Central（备用）
+        mavenCentral()
         // 阿里云 Maven 镜像（优先）
         maven("https://maven.aliyun.com/repository/public")
         // Google 的 Maven 仓库（备用）
@@ -32,8 +34,6 @@ dependencyResolutionManagement {
                 includeGroupAndSubgroups("com.google")
             }
         }
-        // Maven Central（备用）
-        mavenCentral()
         gradlePluginPortal()
         maven { setUrl("https://jitpack.io")  }
     }

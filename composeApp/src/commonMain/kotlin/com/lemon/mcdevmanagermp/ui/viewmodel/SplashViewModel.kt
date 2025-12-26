@@ -2,21 +2,22 @@ package com.lemon.mcdevmanagermp.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.lemon.mcdevmanagermp.data.AppContext
 import com.lemon.mcdevmanagermp.data.AppConstant
-import com.lemon.mcdevmanagermp.data.LOGIN_PAGE
-import com.lemon.mcdevmanagermp.data.MAIN_PAGE
+import com.lemon.mcdevmanagermp.data.AppContext
+import com.lemon.mcdevmanagermp.data.Screen
+import com.lemon.mcdevmanagermp.extension.IUiEffect
+import com.lemon.mcdevmanagermp.extension.createEffectFlow
+import com.lemon.mcdevmanagermp.extension.sendEffect
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 
 class SplashViewModel : ViewModel() {
-    private val _viewEvents = MutableSharedFlow<SplashViewEvent>()
-    val viewEvents = _viewEvents.asSharedFlow()
+    private val _viewEffect = createEffectFlow<SplashViewEffect>()
+    val viewEffect = _viewEffect.asSharedFlow()
 
     fun dispatch(action: SplashViewAction) {
         when (action) {
@@ -27,20 +28,18 @@ class SplashViewModel : ViewModel() {
     private fun getDatabase() {
         viewModelScope.launch(Dispatchers.IO) {
             flow<Unit> {
-                val userInfoList = AppConstant.database.userInfoQueries.getAllUsers().executeAsList()
+                val userInfoList = AppConstant.database.userDao().getAllUsers()
                 userInfoList.let {
                     if (userInfoList.isNotEmpty()) {
                         for (user in userInfoList) {
                             if (userInfoList.indexOf(user) == 0)
-                                AppContext.nowNickname = user.name
-                            user.cookies?.let {
-                                AppContext.cookiesStore[user.name] = it
-                            }
+                                AppContext.nowNickname = user.nickname
+                            AppContext.cookiesStore[user.nickname] = user.cookies
                         }
-                        AppContext.accountList.addAll(userInfoList.map { it.name })
-                        _viewEvents.emit(SplashViewEvent.RouteToPath(MAIN_PAGE))
+                        AppContext.accountList.addAll(userInfoList.map { it.nickname })
+                        sendEffect(_viewEffect, SplashViewEffect.RouteToPath(Screen.MainPage))
                     } else {
-                        _viewEvents.emit(SplashViewEvent.RouteToPath(LOGIN_PAGE))
+                        sendEffect(_viewEffect, SplashViewEffect.RouteToPath(Screen.LoginPage))
                     }
                 }
             }.collect()
@@ -52,6 +51,6 @@ sealed class SplashViewAction {
     data object GetDatabase : SplashViewAction()
 }
 
-sealed class SplashViewEvent {
-    data class RouteToPath(val path: String) : SplashViewEvent()
+sealed class SplashViewEffect : IUiEffect {
+    data class RouteToPath(val path: Screen) : SplashViewEffect()
 }

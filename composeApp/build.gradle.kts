@@ -1,5 +1,4 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
-import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -9,13 +8,14 @@ plugins {
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.composeHotReload)
     alias(libs.plugins.kotlinSerialization)
-    alias(libs.plugins.sqldelight)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.room)
+    alias(libs.plugins.ktorfit)
 }
 
 kotlin {
     androidTarget {
-        @OptIn(ExperimentalKotlinGradlePluginApi::class)
-        compilerOptions {
+        compilerOptions{
             jvmTarget.set(JvmTarget.JVM_17)
         }
     }
@@ -39,12 +39,10 @@ kotlin {
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
-            // ktor
-            implementation(libs.ktor.client.android)
-            // sqlDelight
-            implementation(libs.android.driver)
         }
         commonMain.dependencies {
+            implementation(libs.okio)
+            implementation(libs.kotlinx.datetime)
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material3)
@@ -53,33 +51,34 @@ kotlin {
             implementation(compose.components.uiToolingPreview)
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.androidx.lifecycle.runtimeCompose)
-            implementation(libs.coroutines.extensions)
+            // coroutines
+            implementation(libs.kotlinx.coroutines.core)
             // kotlin Serialization
             implementation(libs.kotlinx.serialization.json)
             // navigation
             implementation(libs.navigation.compose)
             // logging
-            api(libs.logging)
+            implementation(libs.logging)
+            api(libs.log4j)
             // encryption
             implementation(libs.bcprov.jdk15on)
-        }
-        // 确保 commonMain 源集包含 sqldelight 目录
-        val commonMain by getting {
-            kotlin.srcDirs("src/commonMain/kotlin")
-            resources.srcDirs("src/commonMain/resources", "src/main/sqldelight")
+            // room
+            implementation(libs.room)
+            implementation(libs.sqlite.bundled)
+            // ktorfit
+            implementation(libs.ktorfit)
+            // Ktor序列化
+            implementation(libs.ktor.serialization)
+            implementation(libs.ktor.negotiation)
         }
         // jvmMain
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutinesSwing)
-            // sqlDelight
-            implementation(libs.sqldelight.driver)
         }
         iosMain.dependencies {
-            // ktor
-            implementation(libs.ktor.client.darwin)
-            // sqlDelight
-            implementation(libs.native.driver)
+            // BigNum
+            implementation(libs.ionspin.bignum)
         }
     }
 }
@@ -92,8 +91,8 @@ android {
         applicationId = "com.lemon.mcdevmanagermp"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = libs.versions.versions.code.get().toInt()
+        versionName = libs.versions.versions.name.get()
     }
     packaging {
         resources {
@@ -106,13 +105,21 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+    room {
+        schemaDirectory("$projectDir/schemas")
     }
 }
 
 dependencies {
     debugImplementation(compose.uiTooling)
+    add("kspAndroid", libs.room.compiler)
+    add("kspDesktop", libs.room.compiler)
+    add("kspIosX64", libs.room.compiler)
+    add("kspIosArm64", libs.room.compiler)
+    add("kspIosSimulatorArm64", libs.room.compiler)
 }
 
 compose.desktop {
@@ -122,16 +129,7 @@ compose.desktop {
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "com.lemon.mcdevmanagermp"
-            packageVersion = "1.0.0"
-        }
-    }
-}
-
-sqldelight {
-    databases {
-        create("Database") {
-            packageName.set("com.lemon.mcdevmanagermp.data.database")
-            srcDirs.setFrom("src/main/sqldelight")
+            packageVersion = libs.versions.versions.name.get()
         }
     }
 }

@@ -14,8 +14,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.lemon.mcdevmanagermp.AppTheme
-import com.lemon.mcdevmanagermp.data.LOGIN_PAGE
-import com.lemon.mcdevmanagermp.data.SPLASH_PAGE
+import com.lemon.mcdevmanagermp.data.Screen
 import com.lemon.mcdevmanagermp.ui.page.SplashPage
 import com.lemon.mcdevmanagermp.widget.AppSnackbar
 import kotlinx.coroutines.launch
@@ -49,17 +48,17 @@ fun AppScaffold() {
             modifier = Modifier
                 .background(color = AppTheme.colors.background)
                 .fillMaxSize(),
-            startDestination = SPLASH_PAGE
+            startDestination = Screen.SplashPage
         ) {
             // 启动页
-            composable(route = SPLASH_PAGE) {
+            composable<Screen.SplashPage> {
                 SplashPage(
                     navController = navController,
                     showSnackBar = { msg, flag -> showToast(msg, flag) }
                 )
             }
             // 登录页
-            composable(route = LOGIN_PAGE) {
+            composable<Screen.LoginPage> {
 //                LoginPage(
 //                    navController = navController,
 //                    showToast = { msg, flag -> showToast(msg, flag) })

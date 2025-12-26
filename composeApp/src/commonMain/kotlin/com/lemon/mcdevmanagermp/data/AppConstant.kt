@@ -1,10 +1,8 @@
 package com.lemon.mcdevmanagermp.data
 
-import com.lemon.mcdevmanagermp.data.database.Database
+import com.lemon.mcdevmanagermp.data.database.AppDatabase
 
 object AppConstant {
-    const val DATABASE_VERSION = 1
-    lateinit var database: Database
-
+    lateinit var database: AppDatabase
     val userInfoMap = mutableMapOf<String, String>()
 }

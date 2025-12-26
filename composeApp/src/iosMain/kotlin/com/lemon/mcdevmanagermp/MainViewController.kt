@@ -1,13 +1,13 @@
 package com.lemon.mcdevmanagermp
 
 import androidx.compose.ui.window.ComposeUIViewController
-import com.lemon.mcdevmanagermp.data.database.DriverFactory
-import com.lemon.mcdevmanagermp.di.AppDependencies
+import com.lemon.mcdevmanagermp.data.AppConstant
+import com.lemon.mcdevmanagermp.data.database.DatabaseFactory
 
 fun MainViewController() = ComposeUIViewController {
     // 初始化数据库依赖
-    val driverFactory = DriverFactory()
-    AppDependencies.initialize(driverFactory)
+    val databaseFactory = DatabaseFactory()
+    AppConstant.database = databaseFactory.create().build()
 
     App()
 }

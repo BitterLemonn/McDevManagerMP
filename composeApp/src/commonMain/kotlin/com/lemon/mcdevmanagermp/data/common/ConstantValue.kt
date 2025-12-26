@@ -1,23 +1,7 @@
 package com.lemon.mcdevmanagermp.data.common
 
-// navigation 地址
-const val SPLASH_PAGE = "SPLASH_PAGE"
-const val LOGIN_PAGE = "LOGIN_PAGE"
-const val MAIN_PAGE = "MAIN_PAGE"
-const val FEEDBACK_PAGE = "FEEDBACK_PAGE"
-const val COMMENT_PAGE = "COMMENT_PAGE"
-const val ANALYZE_PAGE = "ANALYZE_PAGE"
-const val REALTIME_PROFIT_PAGE = "REALTIME_PROFIT_PAGE"
-const val SETTING_PAGE = "SETTING_PAGE"
-const val LOG_PAGE = "LOG_PAGE"
-const val ABOUT_PAGE = "ABOUT_PAGE"
-const val OPEN_SOURCE_INFO_PAGE = "OPEN_SOURCE_INFO_PAGE"
-const val LICENSE_PAGE = "LICENSE_PAGE"
-const val PROFIT_PAGE = "PROFIT_PAGE"
-const val INCENTIVE_PAGE = "INCENTIVE_PAGE"
-const val INCOME_DETAIL_PAGE = "INCOME_DETAIL_PAGE"
-const val ALL_MOD_SELECT_PAGE = "ALL_MOD_SELECT_PAGE"
-const val MOD_DATA_DETAIL_PAGE = "MOD_DATA_DETAIL_PAGE"
+// 数据库名称
+const val DATABASE_NAME = "mc_dev_manager.db"
 
 // 网易用户cookie名
 const val NETEASE_USER_COOKIE = "NTES_SESS"
