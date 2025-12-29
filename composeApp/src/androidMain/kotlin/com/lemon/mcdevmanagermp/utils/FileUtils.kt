@@ -5,7 +5,6 @@ import android.content.Context
 import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
-import com.orhanobut.logger.Logger
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -44,7 +43,7 @@ fun copyFileToDownloadFolder(
                 }
                 onSuccess()
             } catch (e: IOException) {
-                Logger.e(e, "文件复制至下载目录失败: ${e.message}")
+                Logger.e("文件复制至下载目录失败: ${e.message}", e)
                 onFail()
             }
         } ?: run {
@@ -67,7 +66,7 @@ fun copyFileToDownloadFolder(
             }
             onSuccess()
         } catch (e: IOException) {
-            Logger.e(e, "日志文件导出失败: ${e.message}")
+            Logger.e("日志文件导出失败: ${e.message}", e)
             onFail()
         }
     }

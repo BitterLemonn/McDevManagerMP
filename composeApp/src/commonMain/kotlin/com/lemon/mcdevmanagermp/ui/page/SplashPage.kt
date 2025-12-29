@@ -25,9 +25,9 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.lemon.mcdevmanagermp.data.Screen
 import com.lemon.mcdevmanagermp.ui.theme.TextWhite
-import com.lemon.mcdevmanagermp.ui.viewmodel.SplashViewAction
-import com.lemon.mcdevmanagermp.ui.viewmodel.SplashViewEffect
-import com.lemon.mcdevmanagermp.ui.viewmodel.SplashViewModel
+import com.lemon.mcdevmanagermp.viewmodel.SplashViewAction
+import com.lemon.mcdevmanagermp.viewmodel.SplashViewEffect
+import com.lemon.mcdevmanagermp.viewmodel.SplashViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -45,7 +45,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 fun SplashPage(
     navController: NavController,
     showSnackBar: (String, String) -> Unit = { _, _ -> },
-    viewmodel: SplashViewModel = viewModel()
+    viewmodel: SplashViewModel = viewModel { SplashViewModel() }
 ) {
     var waitingLast = 0
     LaunchedEffect(key1 = Unit) {

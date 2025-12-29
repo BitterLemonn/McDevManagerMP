@@ -8,7 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import com.lemon.mcdevmanagermp.data.AppConstant
 import com.lemon.mcdevmanagermp.data.database.DatabaseFactory
-import com.lemon.mcdevmanagermp.utils.AndroidLogContext
+import com.lemon.mcdevmanagermp.scaffold.AppScaffold
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -24,7 +24,7 @@ class MainActivity : ComponentActivity() {
         AppConstant.database = databaseFactory.create().build()
 
         setContent {
-            App()
+            AppScaffold()
         }
     }
 }
@@ -32,5 +32,5 @@ class MainActivity : ComponentActivity() {
 @Preview
 @Composable
 fun AppAndroidPreview() {
-    App()
+    AppScaffold()
 }

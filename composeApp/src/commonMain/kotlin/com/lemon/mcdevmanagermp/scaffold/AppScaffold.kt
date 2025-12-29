@@ -16,6 +16,7 @@ import androidx.navigation.compose.rememberNavController
 import com.lemon.mcdevmanagermp.AppTheme
 import com.lemon.mcdevmanagermp.data.Screen
 import com.lemon.mcdevmanagermp.ui.page.SplashPage
+import com.lemon.mcdevmanagermp.ui.theme.MCDevManagerTheme
 import com.lemon.mcdevmanagermp.widget.AppSnackbar
 import kotlinx.coroutines.launch
 
@@ -34,34 +35,36 @@ fun AppScaffold() {
         }
     }
 
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        snackbarHost = {
-            SnackbarHost(
-                hostState = snackBarHostState,
-                snackbar = { AppSnackbar(data = it) }
-            )
-        }
-    ) {
-        NavHost(
-            navController = navController,
-            modifier = Modifier
-                .background(color = AppTheme.colors.background)
-                .fillMaxSize(),
-            startDestination = Screen.SplashPage
-        ) {
-            // 启动页
-            composable<Screen.SplashPage> {
-                SplashPage(
-                    navController = navController,
-                    showSnackBar = { msg, flag -> showToast(msg, flag) }
+    MCDevManagerTheme {
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            snackbarHost = {
+                SnackbarHost(
+                    hostState = snackBarHostState,
+                    snackbar = { AppSnackbar(data = it) }
                 )
             }
-            // 登录页
-            composable<Screen.LoginPage> {
+        ) {
+            NavHost(
+                navController = navController,
+                modifier = Modifier
+                    .background(color = AppTheme.colors.background)
+                    .fillMaxSize(),
+                startDestination = Screen.SplashPage
+            ) {
+                // 启动页
+                composable<Screen.SplashPage> {
+                    SplashPage(
+                        navController = navController,
+                        showSnackBar = { msg, flag -> showToast(msg, flag) }
+                    )
+                }
+                // 登录页
+                composable<Screen.LoginPage> {
 //                LoginPage(
 //                    navController = navController,
 //                    showToast = { msg, flag -> showToast(msg, flag) })
+                }
             }
         }
     }

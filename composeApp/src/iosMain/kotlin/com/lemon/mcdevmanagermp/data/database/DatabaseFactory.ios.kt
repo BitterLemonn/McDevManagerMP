@@ -2,18 +2,20 @@ package com.lemon.mcdevmanagermp.data.database
 
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import com.lemon.mcdevmanagermp.data.AppConstant
+import com.lemon.mcdevmanagermp.data.common.DATABASE_NAME
 import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import platform.Foundation.NSDocumentDirectory
 import platform.Foundation.NSFileManager
 import platform.Foundation.NSUserDomainMask
 
 actual class DatabaseFactory {
     actual fun create(): RoomDatabase.Builder<AppDatabase> {
-        val dbFilePath = documentDirectory() + "/${AppConstant.DATABASE_NAME}"
+        val dbFilePath = documentDirectory() + "/$DATABASE_NAME"
         return Room.databaseBuilder<AppDatabase>(
             name = dbFilePath,
-        )
+        ).setQueryCoroutineContext(Dispatchers.IO)
     }
 
     @OptIn(ExperimentalForeignApi::class)

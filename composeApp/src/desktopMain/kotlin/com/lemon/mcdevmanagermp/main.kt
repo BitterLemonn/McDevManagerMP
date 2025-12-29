@@ -4,6 +4,7 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import com.lemon.mcdevmanagermp.data.AppConstant
 import com.lemon.mcdevmanagermp.data.database.DatabaseFactory
+import com.lemon.mcdevmanagermp.scaffold.AppScaffold
 
 fun main() = application {
     // 初始化数据库依赖
@@ -14,6 +15,6 @@ fun main() = application {
         onCloseRequest = ::exitApplication,
         title = "MCDevManagerMP",
     ) {
-        App()
+        AppScaffold()
     }
 }

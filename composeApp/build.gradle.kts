@@ -49,6 +49,7 @@ kotlin {
             implementation(compose.ui)
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
+            implementation(libs.androidx.lifecycle.viewmodel.compose)
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.androidx.lifecycle.runtimeCompose)
             // coroutines
@@ -132,4 +133,8 @@ compose.desktop {
             packageVersion = libs.versions.versions.name.get()
         }
     }
+}
+
+ktorfit {
+    compilerPluginVersion.set("2.3.3")
 }
