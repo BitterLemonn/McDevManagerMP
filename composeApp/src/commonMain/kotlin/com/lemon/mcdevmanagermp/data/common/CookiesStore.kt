@@ -25,6 +25,11 @@ object CookiesStore {
         return cookies.map { "${it.key}=${it.value}" }.joinToString("; ")
     }
 
+    fun getAllCookiesMap(): Map<String, String>{
+        if (cookies.isEmpty()) return HashMap()
+        return cookies.toMap()
+    }
+
     fun clearCookies() {
         cookies.clear()
     }

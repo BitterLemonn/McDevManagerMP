@@ -1,5 +1,7 @@
-package com.lemon.mcdevmanagermp.scaffold
+package com.lemon.mcdevmanagermp.ui.scaffold
 
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Scaffold
@@ -13,9 +15,11 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.lemon.mcdevmanagermp.AppTheme
 import com.lemon.mcdevmanagermp.data.Screen
+import com.lemon.mcdevmanagermp.ui.page.LoginPage
+import com.lemon.mcdevmanagermp.ui.page.MainPage
 import com.lemon.mcdevmanagermp.ui.page.SplashPage
+import com.lemon.mcdevmanagermp.ui.theme.AppTheme
 import com.lemon.mcdevmanagermp.ui.theme.MCDevManagerTheme
 import com.lemon.mcdevmanagermp.widget.AppSnackbar
 import kotlinx.coroutines.launch
@@ -61,9 +65,20 @@ fun AppScaffold() {
                 }
                 // 登录页
                 composable<Screen.LoginPage> {
-//                LoginPage(
-//                    navController = navController,
-//                    showToast = { msg, flag -> showToast(msg, flag) })
+                    LoginPage(
+                        navController = navController,
+                        showToast = { msg, flag -> showToast(msg, flag) })
+                }
+                // 主页
+                composable<Screen.MainPage>(
+                    exitTransition = {
+                        slideOutHorizontally(animationSpec = tween(200), targetOffsetX = { -it })
+                    }
+                ) {
+                    MainPage(
+                        navController = navController,
+                        showToast = { msg, flag -> showToast(msg, flag) }
+                    )
                 }
             }
         }

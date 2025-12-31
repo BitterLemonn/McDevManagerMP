@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "b9712946fe5807f1501ec0ce3284affe",
+    "identityHash": "54d9f9949dcaa6518a2bc86b429ff668",
     "entities": [
       {
         "tableName": "UserEntity",
@@ -45,11 +45,185 @@
             "id"
           ]
         }
+      },
+      {
+        "tableName": "OverviewEntity",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `nickname` TEXT NOT NULL, `days14AverageDiamond` INTEGER NOT NULL, `days14AverageDownload` INTEGER NOT NULL, `days14TotalDiamond` INTEGER NOT NULL, `days14TotalDownload` INTEGER NOT NULL, `lastMonthDiamond` INTEGER NOT NULL, `lastMonthDownload` INTEGER NOT NULL, `thisMonthDiamond` INTEGER NOT NULL, `thisMonthDownload` INTEGER NOT NULL, `yesterdayDiamond` INTEGER NOT NULL, `yesterdayDownload` INTEGER NOT NULL, `lastMonthProfit` TEXT NOT NULL, `lastMonthTax` TEXT NOT NULL, `thisMonthProfit` TEXT NOT NULL, `thisMonthTax` TEXT NOT NULL, `timestamp` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nickname",
+            "columnName": "nickname",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "days14AverageDiamond",
+            "columnName": "days14AverageDiamond",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "days14AverageDownload",
+            "columnName": "days14AverageDownload",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "days14TotalDiamond",
+            "columnName": "days14TotalDiamond",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "days14TotalDownload",
+            "columnName": "days14TotalDownload",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastMonthDiamond",
+            "columnName": "lastMonthDiamond",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastMonthDownload",
+            "columnName": "lastMonthDownload",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "thisMonthDiamond",
+            "columnName": "thisMonthDiamond",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "thisMonthDownload",
+            "columnName": "thisMonthDownload",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "yesterdayDiamond",
+            "columnName": "yesterdayDiamond",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "yesterdayDownload",
+            "columnName": "yesterdayDownload",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastMonthProfit",
+            "columnName": "lastMonthProfit",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastMonthTax",
+            "columnName": "lastMonthTax",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "thisMonthProfit",
+            "columnName": "thisMonthProfit",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "thisMonthTax",
+            "columnName": "thisMonthTax",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timestamp",
+            "columnName": "timestamp",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "AnalyzeEntity",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `nickname` TEXT NOT NULL, `filterType` INTEGER NOT NULL, `platform` TEXT NOT NULL, `startDate` TEXT NOT NULL, `endDate` TEXT NOT NULL, `filterResourceList` TEXT NOT NULL, `createTime` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nickname",
+            "columnName": "nickname",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "filterType",
+            "columnName": "filterType",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "platform",
+            "columnName": "platform",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "startDate",
+            "columnName": "startDate",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "endDate",
+            "columnName": "endDate",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "filterResourceList",
+            "columnName": "filterResourceList",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createTime",
+            "columnName": "createTime",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        }
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'b9712946fe5807f1501ec0ce3284affe')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '54d9f9949dcaa6518a2bc86b429ff668')"
     ]
   }
 }

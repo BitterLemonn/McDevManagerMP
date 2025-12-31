@@ -6,9 +6,12 @@ import com.lemon.mcdevmanagermp.data.AppConstant
 import com.lemon.mcdevmanagermp.data.AppContext
 import com.lemon.mcdevmanagermp.data.Screen
 import com.lemon.mcdevmanagermp.data.common.CookiesStore
+import com.lemon.mcdevmanagermp.data.common.JSONConverter
 import com.lemon.mcdevmanagermp.data.common.NETEASE_USER_COOKIE
 import com.lemon.mcdevmanagermp.data.database.entities.UserEntity
+import com.lemon.mcdevmanagermp.data.netease.login.PVInfo
 import com.lemon.mcdevmanagermp.data.netease.login.PVResultStrBean
+import com.lemon.mcdevmanagermp.data.repository.LoginRepository
 import com.lemon.mcdevmanagermp.extension.IUiAction
 import com.lemon.mcdevmanagermp.extension.IUiEffect
 import com.lemon.mcdevmanagermp.extension.IUiState
@@ -17,8 +20,9 @@ import com.lemon.mcdevmanagermp.extension.sendEffect
 import com.lemon.mcdevmanagermp.extension.setState
 import com.lemon.mcdevmanagermp.utils.Logger
 import com.lemon.mcdevmanagermp.utils.NetworkState
-import com.lemon.mcdevmanagermp.utils.dumpAndGetCookiesValue
-import com.lemon.mcdevmanagermp.utils.isValidCookiesStr
+import com.lemon.mcdevmanagermp.extension.dumpAndGetCookiesValue
+import com.lemon.mcdevmanagermp.extension.isValidCookiesStr
+import com.lemon.mcdevmanagermp.utils.vdfAsync
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,7 +38,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class LoginViewModel : ViewModel() {
-    private val repository = LoginRepository.getInstance()
+    private val repository = LoginRepository.INSTANCE
 
     private val _viewState = MutableStateFlow(LoginViewState())
     val viewState = _viewState.asStateFlow()
@@ -57,7 +61,6 @@ class LoginViewModel : ViewModel() {
     }
 
     private fun login() {
-
         viewModelScope.launch {
             if (_viewState.value.cookies.isNotEmpty()) {
                 val text = _viewState.value.cookies
@@ -68,12 +71,12 @@ class LoginViewModel : ViewModel() {
                     return@launch
                 }
                 CookiesStore.addCookie(NETEASE_USER_COOKIE, cookie)
-                _viewEffect.setEvent(LoginViewEffect.LoginSuccess("登录成功"))
+                sendEffect(_viewEffect, LoginViewEffect.LoginSuccess)
             } else {
                 flow<Unit> {
                     initLogic()
                 }.catch {
-                    _viewEffect.setEvent(LoginViewEffect.LoginFailed(it.message ?: "登录失败"))
+                    sendEffect(_viewEffect, LoginViewEffect.LoginFailed(it.message ?: "登录失败"))
                 }.onStart {
                     _viewState.setState { copy(isStartLogin = true) }
                 }.onCompletion {
@@ -100,7 +103,8 @@ class LoginViewModel : ViewModel() {
     private suspend fun getPowerLogic() {
         Logger.d("开始获取权限")
         val power = repository.getPower(
-            _viewState.value.username, topUrl = "https://mcdev.webapp.163.com/#/login"
+            username=_viewState.value.username,
+            topUrl = "https://mcdev.webapp.163.com/#/login"
         )
         when (power) {
             is NetworkState.Success -> {
@@ -124,7 +128,7 @@ class LoginViewModel : ViewModel() {
                 getTicketLogic()
                 emit("")
             }.catch {
-                _viewEffect.setEvent(LoginViewEffect.LoginFailed(it.message ?: "登录失败"))
+                sendEffect(_viewEffect, LoginViewEffect.LoginFailed(it.message ?: "登录失败"))
             }.flowOn(Dispatchers.IO).collect()
         }
     }
@@ -152,6 +156,7 @@ class LoginViewModel : ViewModel() {
         )) {
             is NetworkState.Success -> {
                 sendEffect(_viewEffect, LoginViewEffect.ShowToast("登录成功", false))
+                sendEffect(_viewEffect, LoginViewEffect.LoginSuccess)
             }
 
             is NetworkState.Error -> {
@@ -216,7 +221,7 @@ data class LoginViewState(
 ) : IUiState
 
 sealed class LoginViewEffect : IUiEffect {
-    data class LoginSuccess(val username: String) : LoginViewEffect()
+    object LoginSuccess : LoginViewEffect()
     data class LoginFailed(val message: String) : LoginViewEffect()
     data class RouteToPath(val path: Screen, val needPop: Boolean = false) : LoginViewEffect()
     data class ShowToast(val message: String, val isError: Boolean = true) : LoginViewEffect()

@@ -28,8 +28,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -40,52 +38,48 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import com.lemon.mcdevmanager.MainActivity
-import com.lemon.mcdevmanager.R
-import com.lemon.mcdevmanager.data.common.LOGIN_PAGE
-import com.lemon.mcdevmanager.ui.base.BasePage
-import com.lemon.mcdevmanager.ui.theme.AppTheme
-import com.lemon.mcdevmanager.ui.theme.MCDevManagerTheme
-import com.lemon.mcdevmanager.ui.theme.TextWhite
-import com.lemon.mcdevmanager.ui.widget.AppLoadingWidget
-import com.lemon.mcdevmanager.ui.widget.BottomNameInput
-import com.lemon.mcdevmanager.ui.widget.LoginOutlineTextField
-import com.lemon.mcdevmanager.ui.widget.SNACK_ERROR
-import com.lemon.mcdevmanager.ui.widget.SNACK_INFO
-import com.lemon.mcdevmanager.utils.pxToDp
-import com.lemon.mcdevmanager.viewModel.LoginViewAction
-import com.lemon.mcdevmanager.viewModel.LoginViewEvent
-import com.lemon.mcdevmanager.viewModel.LoginViewModel
-import com.zj.mvi.core.observeEvent
-import kotlinx.coroutines.Job
+import com.lemon.mcdevmanagermp.data.Screen
+import com.lemon.mcdevmanagermp.ui.theme.AppTheme
+import com.lemon.mcdevmanagermp.ui.theme.MCDevManagerTheme
+import com.lemon.mcdevmanagermp.ui.theme.TextWhite
+import com.lemon.mcdevmanagermp.ui.widget.AppLoadingWidget
+import com.lemon.mcdevmanagermp.ui.widget.BottomNameInput
+import com.lemon.mcdevmanagermp.ui.widget.LoginOutlineTextField
+import com.lemon.mcdevmanagermp.utils.Logger
+import com.lemon.mcdevmanagermp.viewmodel.LoginViewAction
+import com.lemon.mcdevmanagermp.viewmodel.LoginViewEffect
+import com.lemon.mcdevmanagermp.viewmodel.LoginViewModel
+import com.lemon.mcdevmanagermp.widget.SNACK_ERROR
+import com.lemon.mcdevmanagermp.widget.SNACK_INFO
+import mcdevmanagermp.composeapp.generated.resources.Res
+import mcdevmanagermp.composeapp.generated.resources.ic_mc
+import mcdevmanagermp.composeapp.generated.resources.ic_no_show
+import mcdevmanagermp.composeapp.generated.resources.ic_show
+import mcdevmanagermp.composeapp.generated.resources.img_login_bg
+import mcdevmanagermp.composeapp.generated.resources.minecraft_ae
+import org.jetbrains.compose.resources.Font
+import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 fun LoginPage(
     navController: NavController = rememberNavController(),
-    viewModel: LoginViewModel = viewModel(),
+    viewModel: LoginViewModel = viewModel { LoginViewModel() },
     showToast: (String, String) -> Unit = { _, _ -> },
 ) {
-    val context = LocalContext.current
     val keyboardController = LocalSoftwareKeyboardController.current
     val states by viewModel.viewState.collectAsState()
 
@@ -100,18 +94,21 @@ fun LoginPage(
     )
 
     BasePage(
-        viewEvent = viewModel.viewEvent,
-        onEvent = { event ->
-            when (event) {
-                is LoginViewEvent.LoginFailed -> showToast(event.message, SNACK_ERROR)
-                is LoginViewEvent.LoginSuccess -> isLoginSuccess = true
-                is LoginViewEvent.RouteToPath -> navController.navigate(event.path) {
-                    popUpTo(LOGIN_PAGE) { inclusive = true }
+        viewEffect = viewModel.viewEffect,
+        onEffect = { effect ->
+            when (effect) {
+                is LoginViewEffect.LoginFailed -> showToast(effect.message, SNACK_ERROR)
+                is LoginViewEffect.LoginSuccess -> {
+                    Logger.d("登录成功")
+                    isLoginSuccess = true
+                }
+                is LoginViewEffect.RouteToPath -> navController.navigate(effect.path) {
+                    popUpTo(Screen.LoginPage) { inclusive = true }
                     launchSingleTop = true
                 }
 
-                is LoginViewEvent.ShowToast ->
-                    showToast(event.message, if (event.isError) SNACK_ERROR else SNACK_INFO)
+                is LoginViewEffect.ShowToast ->
+                    showToast(effect.message, if (effect.isError) SNACK_ERROR else SNACK_INFO)
             }
         }
     ) {
@@ -122,9 +119,6 @@ fun LoginPage(
                         .fillMaxSize()
                         .background(AppTheme.colors.background)
                         .imePadding()
-                        .onGloballyPositioned {
-                            isShowTitle = pxToDp(context, it.size.height.toFloat()) > 600
-                        }
                 ) {
                     if (isShowTitle)
                         Box(
@@ -140,7 +134,7 @@ fun LoginPage(
                                     .fillMaxWidth()
                                     .padding(20.dp),
                                 color = AppTheme.colors.textColor,
-                                fontFamily = FontFamily(Font(R.font.minecraft_ae)),
+                                fontFamily = FontFamily(Font(Res.font.minecraft_ae)),
                                 letterSpacing = 20.sp,
                                 textAlign = TextAlign.Center
                             )
@@ -152,7 +146,7 @@ fun LoginPage(
                             .align(Alignment.Center)
                     ) {
                         Image(
-                            painter = painterResource(id = R.drawable.ic_mc),
+                            painter = painterResource(Res.drawable.ic_mc),
                             contentDescription = "",
                             modifier = Modifier
                                 .align(Alignment.CenterHorizontally)
@@ -222,8 +216,8 @@ fun LoginPage(
                                     ) {
                                         Image(
                                             painter = painterResource(
-                                                id = if (isShowPassword) R.drawable.ic_no_show
-                                                else R.drawable.ic_show
+                                                if (isShowPassword) Res.drawable.ic_no_show
+                                                else Res.drawable.ic_show
                                             ),
                                             contentDescription = "visibility",
                                             colorFilter = ColorFilter.tint(AppTheme.colors.primaryColor),
@@ -287,7 +281,7 @@ fun LoginPage(
                 // 登录成功
                 Box(modifier = Modifier.fillMaxWidth()) {
                     Image(
-                        painter = painterResource(id = R.drawable.img_login_bg),
+                        painter = painterResource(Res.drawable.img_login_bg),
                         contentDescription = "login success background",
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
@@ -318,10 +312,10 @@ fun LoginPage(
 }
 
 @Composable
-@Preview(showBackground = true, showSystemUi = true)
+@Preview(showBackground = true)
 private fun LoginPagePreview() {
     MCDevManagerTheme {
-        Box(Modifier.fillMaxSize().background(AppTheme.colors.background)){
+        Box(Modifier.fillMaxSize().background(AppTheme.colors.background)) {
             LoginPage()
         }
     }

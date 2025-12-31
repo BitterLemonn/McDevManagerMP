@@ -1,6 +1,5 @@
 package com.lemon.mcdevmanagermp.api
 
-import com.lemon.mcdevmanagermp.data.common.JSONConverter
 import com.lemon.mcdevmanagermp.data.common.NETEASE_MC_DEV_LINK
 import com.lemon.mcdevmanagermp.data.netease.income.OneResRealtimeIncomeBean
 import com.lemon.mcdevmanagermp.data.netease.resource.NewResDetailResponseBean
@@ -8,17 +7,11 @@ import com.lemon.mcdevmanagermp.data.netease.resource.ResDetailResponseBean
 import com.lemon.mcdevmanagermp.data.netease.resource.ResMonthDetailResponseBean
 import com.lemon.mcdevmanagermp.data.netease.resource.ResourceResponseBean
 import com.lemon.mcdevmanagermp.utils.ResponseData
-import de.jensklingenberg.ktorfit.Ktorfit
 import de.jensklingenberg.ktorfit.http.GET
 import de.jensklingenberg.ktorfit.http.Path
 import de.jensklingenberg.ktorfit.http.Query
-import io.ktor.client.HttpClient
-import io.ktor.client.plugins.HttpTimeout
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.client.plugins.cookies.AcceptAllCookiesStorage
-import io.ktor.client.plugins.cookies.HttpCookies
 
-interface AnalyzeApi : BaseApi {
+interface AnalyzeApi {
     @GET("/items/categories/{platform}/")
     suspend fun getAllResource(
         @Path("platform") platform: String = "pe",
@@ -75,4 +68,10 @@ interface AnalyzeApi : BaseApi {
         @Query("begin_time") beginTime: String,
         @Query("end_time") endTime: String
     ): ResponseData<OneResRealtimeIncomeBean>
+
+    companion object {
+        val INSTANCE: AnalyzeApi by lazy {
+            ApiFactory.provideKtorfit(NETEASE_MC_DEV_LINK).createAnalyzeApi()
+        }
+    }
 }

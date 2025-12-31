@@ -8,7 +8,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import com.lemon.mcdevmanagermp.data.AppConstant
 import com.lemon.mcdevmanagermp.data.database.DatabaseFactory
-import com.lemon.mcdevmanagermp.scaffold.AppScaffold
+import com.lemon.mcdevmanagermp.ui.scaffold.AppScaffold
+import com.lemon.mcdevmanagermp.utils.Logger
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -17,6 +18,7 @@ class MainActivity : ComponentActivity() {
 
         // 初始化日志
         System.setProperty("kotlin-logging-to-android-native", "true")
+        System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", Logger.LOG_LEVEL)
         AndroidLogContext.setContext(this)
 
         // 初始化数据库依赖

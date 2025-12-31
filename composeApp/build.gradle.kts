@@ -39,6 +39,7 @@ kotlin {
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
+            implementation(libs.accompanist.permissions)
         }
         commonMain.dependencies {
             implementation(libs.okio)
@@ -52,6 +53,7 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodel.compose)
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.androidx.lifecycle.runtimeCompose)
+            implementation(libs.material.window.size)
             // coroutines
             implementation(libs.kotlinx.coroutines.core)
             // kotlin Serialization
@@ -71,6 +73,12 @@ kotlin {
             // Ktor序列化
             implementation(libs.ktor.serialization)
             implementation(libs.ktor.negotiation)
+            implementation(libs.ktor.logging)
+            // composeView
+            implementation(libs.compose.views)
+            // coil
+            implementation(libs.coil.compose)
+            implementation(libs.coil.network)
         }
         // jvmMain
         desktopMain.dependencies {
@@ -137,4 +145,8 @@ compose.desktop {
 
 ktorfit {
     compilerPluginVersion.set("2.3.3")
+}
+
+tasks.withType<JavaExec> {
+    jvmArgs("-Dfile.encoding=UTF-8")
 }

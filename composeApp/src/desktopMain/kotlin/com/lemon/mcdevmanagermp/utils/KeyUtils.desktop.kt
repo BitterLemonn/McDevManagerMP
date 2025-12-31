@@ -78,7 +78,6 @@ actual suspend fun vdfAsync(data: PVInfo): PVResultStrBean {
         "${URLEncoder.encode(key, "UTF-8")}=${URLEncoder.encode(value, "UTF-8")}"
     }
 
-    println("encodedParams: $encodedParams, count: ${count.toUInt()}")
     val sign = murmurHash3(encodedParams, count.toUInt())
 
     return PVResultStrBean(

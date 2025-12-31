@@ -1,5 +1,6 @@
 package com.lemon.mcdevmanagermp.data.repository
 
+import com.lemon.mcdevmanagermp.api.LoginApi
 import com.lemon.mcdevmanagermp.data.common.RSAKey
 import com.lemon.mcdevmanagermp.data.common.SM4Key
 import com.lemon.mcdevmanagermp.data.netease.login.EncParams
@@ -13,17 +14,14 @@ import com.lemon.mcdevmanagermp.utils.UnifiedExceptionHandler
 import com.lemon.mcdevmanagermp.utils.dataJsonToString
 import com.lemon.mcdevmanagermp.utils.rsaEncrypt
 import com.lemon.mcdevmanagermp.utils.sm4Encrypt
-import kotlinx.coroutines.internal.synchronized
-import kotlin.concurrent.Volatile
 
 class LoginRepository {
 
+    private constructor()
+
     companion object {
-        @Volatile
-        private var instance: LoginRepository? = null
-        fun getInstance() = instance ?: synchronized(this) {
-            instance ?: LoginRepository().also { instance = it }
-        }
+        val INSTANCE by lazy { LoginRepository() }
+        private val loginApi = LoginApi.INSTANCE
     }
 
     suspend fun init(topUrl: String): NetworkState<String> {
@@ -31,7 +29,7 @@ class LoginRepository {
             val initRequest = GetCapIdRequestBean(topURL = topUrl)
             val encode = sm4Encrypt(dataJsonToString(initRequest), SM4Key)
             val encParams = EncParams(encode)
-            LoginApi.create().init(encParams)
+            loginApi.init(encParams)
         }
     }
 
@@ -40,7 +38,7 @@ class LoginRepository {
             val powerRequest = GetPowerRequestBean(un = username, topURL = topUrl)
             val encode = sm4Encrypt(dataJsonToString(powerRequest), SM4Key)
             val encParams = EncParams(encode)
-            LoginApi.create().getPower(encParams)
+            loginApi.getPower(encParams)
         }
     }
 
@@ -48,8 +46,7 @@ class LoginRepository {
         return UnifiedExceptionHandler.handleNeteaseRequest {
             val tkRequest = TicketRequestBean(username, topURL = topUrl)
             val encParams = EncParams(sm4Encrypt(dataJsonToString(tkRequest), SM4Key))
-            LoginApi.create()
-                .getTicket(encParams)
+            loginApi.getTicket(encParams)
         }
     }
 
@@ -59,7 +56,7 @@ class LoginRepository {
         ticket: String,
         pvResultBean: PVResultStrBean
     ): NetworkState<String> {
-        return UnifiedExceptionHandler.handleSuspendWithNeteaseData {
+        return UnifiedExceptionHandler.handleNeteaseRequest {
             val encodePw = rsaEncrypt(password, RSAKey)
             val loginRequest = LoginRequestBean(
                 un = username,
@@ -70,7 +67,7 @@ class LoginRepository {
             )
             val encode = sm4Encrypt(dataJsonToString(loginRequest), SM4Key)
             val encParams = EncParams(encode)
-            LoginApi.create().safeLogin(encParams)
+            loginApi.safeLogin(encParams)
         }
     }
 

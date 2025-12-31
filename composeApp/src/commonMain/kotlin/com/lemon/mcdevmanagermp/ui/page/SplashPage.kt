@@ -54,12 +54,6 @@ fun SplashPage(
                 waitingLast++
                 delay(1000)
             }
-            withContext(Dispatchers.Main) {
-                navController.navigate(Screen.MainPage) {
-                    launchSingleTop = true
-                    popUpTo(Screen.SplashPage) { inclusive = true }
-                }
-            }
         }
         viewmodel.dispatch(SplashViewAction.GetDatabase)
     }

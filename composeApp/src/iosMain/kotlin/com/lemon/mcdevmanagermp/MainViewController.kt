@@ -3,7 +3,7 @@ package com.lemon.mcdevmanagermp
 import androidx.compose.ui.window.ComposeUIViewController
 import com.lemon.mcdevmanagermp.data.AppConstant
 import com.lemon.mcdevmanagermp.data.database.DatabaseFactory
-import com.lemon.mcdevmanagermp.scaffold.AppScaffold
+import com.lemon.mcdevmanagermp.ui.scaffold.AppScaffold
 
 fun MainViewController() = ComposeUIViewController {
     // 初始化数据库依赖

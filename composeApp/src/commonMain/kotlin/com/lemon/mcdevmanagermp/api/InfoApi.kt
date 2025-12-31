@@ -1,5 +1,6 @@
 package com.lemon.mcdevmanagermp.api
 
+import com.lemon.mcdevmanagermp.data.common.NETEASE_MC_DEV_LINK
 import com.lemon.mcdevmanagermp.data.netease.resource.ResourceResponseBean
 import com.lemon.mcdevmanagermp.data.netease.user.LevelInfoBean
 import com.lemon.mcdevmanagermp.data.netease.user.OverviewBean
@@ -8,18 +9,17 @@ import com.lemon.mcdevmanagermp.utils.ResponseData
 import de.jensklingenberg.ktorfit.http.GET
 import de.jensklingenberg.ktorfit.http.Path
 import de.jensklingenberg.ktorfit.http.Query
-import retrofit2.Call
 
 interface InfoApi {
 
     @GET("/users/me")
-    fun getUserInfo(): Call<ResponseData<UserInfoBean>>
+    suspend fun getUserInfo(): ResponseData<UserInfoBean>
 
     @GET("/data_analysis/overview")
-    fun getOverview(): Call<ResponseData<OverviewBean>>
+    suspend fun getOverview(): ResponseData<OverviewBean>
 
     @GET("/new_level")
-    fun getLevelInfo(): Call<ResponseData<LevelInfoBean>>
+    suspend fun getLevelInfo(): ResponseData<LevelInfoBean>
 
     @GET("/items/categories/{platform}")
     suspend fun getResInfoList(
@@ -27,4 +27,10 @@ interface InfoApi {
         @Query("start") start: Int = 0,
         @Query("span") span: Int = Int.MAX_VALUE
     ): ResponseData<ResourceResponseBean>
+
+    companion object {
+        val INSTANCE by lazy {
+            ApiFactory.provideKtorfit(NETEASE_MC_DEV_LINK).createInfoApi()
+        }
+    }
 }

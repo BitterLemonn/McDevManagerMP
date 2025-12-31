@@ -22,9 +22,5 @@ sealed class NetworkState<out T> {
     data class Error<T>(val msg: String, val e: Exception? = null) : NetworkState<T>()
 }
 
-class CookiesExpiredException : Exception("Cookies expired, please re-login") {
-    private fun readResolve(): Any = CookiesExpiredException()
-}
-
 @Serializable
 data object NoNeedData

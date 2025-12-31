@@ -14,7 +14,7 @@ import okio.use
 import kotlin.time.Clock
 
 object Logger {
-    private const val LOG_LEVEL = "DEBUG"
+    const val LOG_LEVEL = "DEBUG"
     private val logLevel = when (LOG_LEVEL) {
         "DEBUG" -> 0
         "INFO" -> 1

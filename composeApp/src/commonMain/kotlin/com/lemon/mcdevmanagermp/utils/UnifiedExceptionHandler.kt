@@ -86,17 +86,12 @@ object UnifiedExceptionHandler {
      * 统一异常处理逻辑
      */
     private suspend fun <T> handleException(e: Exception): NetworkState<T> {
-        // 关键点：如果是协程被取消（用户离开页面），需要向上抛出，或者明确返回取消状态
-        // 建议：如果你希望 ViewModel 知道任务被取消了，这里应该 throw e
-        // 如果你希望 UI 显示“请求取消”，则按下面处理
         if (e is CancellationException) {
-            Logger.d("$TAG: 协程任务被取消 (用户可能离开了页面)")
-            return NetworkState.Error("请求已取消", CancelException())
+            // 协程取消异常，直接抛出以便上层处理
+            throw e
         }
 
         return when (e) {
-            // Ktor 的网络连接超时通常包含在 IOException 或 SocketTimeoutException (平台相关)
-            // KMP 中通常建议捕获具体的 Ktor 异常或 IOException
             is io.ktor.client.network.sockets.ConnectTimeoutException,
             is io.ktor.client.network.sockets.SocketTimeoutException -> {
                 Logger.e("$TAG:链接超时\n$e")
@@ -105,16 +100,19 @@ object UnifiedExceptionHandler {
 
             // Ktor 的 HTTP 错误状态码处理 (4xx, 5xx)
             is ResponseException -> {
-                val statusCode = e.response.status.value
-                if (statusCode == 401) {
-                    Logger.e("$TAG:Token失效\n$e")
-                    NetworkState.Error("登录过期啦!", LoginException("登录过期啦!"))
-                } else if (statusCode == 403) {
-                    Logger.e("$TAG:请求受限\n$e")
-                    NetworkState.Error("请求过于频繁,请稍后再次尝试", e)
-                } else {
-                    Logger.e("$TAG:HTTP错误 $statusCode\n$e")
-                    NetworkState.Error("服务器开小差了 ($statusCode)", e)
+                when (val statusCode = e.response.status.value) {
+                    401 -> {
+                        Logger.e("$TAG:Token失效\n$e")
+                        NetworkState.Error("登录过期啦!", LoginException("登录过期啦!"))
+                    }
+                    403 -> {
+                        Logger.e("$TAG:请求受限\n$e")
+                        NetworkState.Error("请求过于频繁,请稍后再次尝试", e)
+                    }
+                    else -> {
+                        Logger.e("$TAG:HTTP错误 $statusCode\n$e")
+                        NetworkState.Error("服务器开小差了 ($statusCode)", e)
+                    }
                 }
             }
 
@@ -122,11 +120,6 @@ object UnifiedExceptionHandler {
             is IOException -> {
                 Logger.e("$TAG:网络错误\n$e")
                 NetworkState.Error("服务器掉进深暗之域了", e)
-            }
-
-            is CancellationException -> {
-                Logger.d("$TAG:协程任务被取消\n$e")
-                NetworkState.Error("请求已取消", CancelException())
             }
 
             else -> {
@@ -170,6 +163,5 @@ object UnifiedExceptionHandler {
     }
 
     class LoginException(message: String? = null) : Exception(message)
-    class CancelException(message: String? = null) : Exception(message)
     class CookiesExpiredException : Exception("Cookies 已过期")
 }

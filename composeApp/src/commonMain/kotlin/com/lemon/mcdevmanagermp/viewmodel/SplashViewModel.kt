@@ -8,6 +8,7 @@ import com.lemon.mcdevmanagermp.data.Screen
 import com.lemon.mcdevmanagermp.extension.IUiEffect
 import com.lemon.mcdevmanagermp.extension.createEffectFlow
 import com.lemon.mcdevmanagermp.extension.sendEffect
+import com.lemon.mcdevmanagermp.utils.Logger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.asSharedFlow
@@ -29,6 +30,7 @@ class SplashViewModel : ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             flow<Unit> {
                 val userInfoList = AppConstant.database.userDao().getAllUsers()
+                Logger.d("获取到用户列表: $userInfoList")
                 userInfoList.let {
                     if (userInfoList.isNotEmpty()) {
                         for (user in userInfoList) {

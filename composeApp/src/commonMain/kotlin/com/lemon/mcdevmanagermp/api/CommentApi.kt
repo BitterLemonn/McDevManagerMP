@@ -1,5 +1,6 @@
 package com.lemon.mcdevmanagermp.api
 
+import com.lemon.mcdevmanagermp.data.common.NETEASE_MC_DEV_LINK
 import com.lemon.mcdevmanagermp.data.netease.comment.CommentList
 import com.lemon.mcdevmanagermp.utils.ResponseData
 import de.jensklingenberg.ktorfit.http.GET
@@ -17,4 +18,10 @@ interface CommentApi {
         @Query("start_date") startDate: String? = null,
         @Query("end_date") endDate: String? = null
     ): ResponseData<CommentList>
+
+    companion object {
+        val INSTANCE: CommentApi by lazy {
+            ApiFactory.provideKtorfit(NETEASE_MC_DEV_LINK).createCommentApi()
+        }
+    }
 }

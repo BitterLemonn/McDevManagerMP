@@ -11,7 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.lemon.mcdevmanagermp.AppTheme
+import com.lemon.mcdevmanagermp.ui.theme.AppTheme
 
 @Composable
 fun Box(
