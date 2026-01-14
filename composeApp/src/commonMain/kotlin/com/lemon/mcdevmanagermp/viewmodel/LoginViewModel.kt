@@ -11,7 +11,9 @@ import com.lemon.mcdevmanagermp.data.common.NETEASE_USER_COOKIE
 import com.lemon.mcdevmanagermp.data.database.entities.UserEntity
 import com.lemon.mcdevmanagermp.data.netease.login.PVInfo
 import com.lemon.mcdevmanagermp.data.netease.login.PVResultStrBean
+import com.lemon.mcdevmanagermp.data.repository.DetailRepository
 import com.lemon.mcdevmanagermp.data.repository.LoginRepository
+import com.lemon.mcdevmanagermp.data.repository.MainRepository
 import com.lemon.mcdevmanagermp.extension.IUiAction
 import com.lemon.mcdevmanagermp.extension.IUiEffect
 import com.lemon.mcdevmanagermp.extension.IUiState
@@ -38,7 +40,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class LoginViewModel : ViewModel() {
-    private val repository = LoginRepository.INSTANCE
+    private val loginRepository = LoginRepository.INSTANCE
+    private val mainRepository = MainRepository.INSTANCE
 
     private val _viewState = MutableStateFlow(LoginViewState())
     val viewState = _viewState.asStateFlow()
@@ -56,7 +59,6 @@ class LoginViewModel : ViewModel() {
             is LoginViewAction.UpdatePassword -> _viewState.setState { copy(password = action.password) }
             is LoginViewAction.UpdateCookies -> _viewState.setState { copy(cookies = action.cookies) }
             is LoginViewAction.Login -> login()
-            is LoginViewAction.SetUser -> setUser(action.nickname)
         }
     }
 
@@ -71,7 +73,7 @@ class LoginViewModel : ViewModel() {
                     return@launch
                 }
                 CookiesStore.addCookie(NETEASE_USER_COOKIE, cookie)
-                sendEffect(_viewEffect, LoginViewEffect.LoginSuccess)
+                getUserInfoLogic()
             } else {
                 flow<Unit> {
                     initLogic()
@@ -88,7 +90,7 @@ class LoginViewModel : ViewModel() {
 
     private suspend fun initLogic() {
         Logger.d("开始初始化")
-        val init = repository.init("https://mcdev.webapp.163.com/#/login")
+        val init = loginRepository.init("https://mcdev.webapp.163.com/#/login")
         when (init) {
             is NetworkState.Success -> {
                 getPowerLogic()
@@ -102,8 +104,8 @@ class LoginViewModel : ViewModel() {
 
     private suspend fun getPowerLogic() {
         Logger.d("开始获取权限")
-        val power = repository.getPower(
-            username=_viewState.value.username,
+        val power = loginRepository.getPower(
+            username = _viewState.value.username,
             topUrl = "https://mcdev.webapp.163.com/#/login"
         )
         when (power) {
@@ -135,7 +137,7 @@ class LoginViewModel : ViewModel() {
 
     private suspend fun getTicketLogic() {
         Logger.d("开始获取ticket")
-        when (val ticket = repository.getTicket(
+        when (val ticket = loginRepository.getTicket(
             _viewState.value.username, "https://mcdev.webapp.163.com/#/login"
         )) {
             is NetworkState.Success -> {
@@ -151,12 +153,11 @@ class LoginViewModel : ViewModel() {
 
     private suspend fun safeLoginLogic() {
         Logger.d("开始安全登录")
-        when (val login = repository.loginWithTicket(
+        when (val login = loginRepository.loginWithTicket(
             _viewState.value.username, _viewState.value.password, tk, pvResultBean
         )) {
             is NetworkState.Success -> {
-                sendEffect(_viewEffect, LoginViewEffect.ShowToast("登录成功", false))
-                sendEffect(_viewEffect, LoginViewEffect.LoginSuccess)
+                getUserInfoLogic()
             }
 
             is NetworkState.Error -> {
@@ -175,40 +176,46 @@ class LoginViewModel : ViewModel() {
         }
     }
 
-    private fun setUser(nickname: String) {
-        viewModelScope.launch(Dispatchers.IO) {
-            var isExist = false
-            withContext(Dispatchers.IO) {
-                val user = AppConstant.database.userDao().getUserByNickname(nickname)
-                if (user != null) {
-                    sendEffect(_viewEffect, LoginViewEffect.LoginFailed("助记名称已存在"))
-                    isExist = true
+    private suspend fun getUserInfoLogic() {
+        flow<Unit> {
+            when (val result = mainRepository.getUserInfo()) {
+                is NetworkState.Success -> {
+                    val nickname = result.data?.nickname ?: _viewState.value.username
+                    setUser(nickname)
+                    sendEffect(_viewEffect, LoginViewEffect.ShowToast("登录成功", false))
+                    sendEffect(_viewEffect, LoginViewEffect.RouteToPath(Screen.MainPage, true))
+                }
+
+                is NetworkState.Error -> {
+                    throw Exception("登录失败, 无法获取正确的开发者信息")
                 }
             }
-            if (!isExist) {
-                flow<Unit> {
-                    // room持久化
-                    val cookies = CookiesStore.getCookie(NETEASE_USER_COOKIE)
-                        ?: throw Exception("获取用户信息失败, 请重新登录")
-                    val username = _viewState.value.username
-                    val password = _viewState.value.password
-                    val userInfo = UserEntity(
-                        username = username,
-                        password = password,
-                        nickname = nickname,
-                        cookies = cookies
-                    )
-                    // 持久化
-                    AppConstant.database.userDao().updateUser(userInfo)
-                    AppContext.cookiesStore[nickname] = cookies
-                    AppContext.nowNickname = nickname
-                    AppContext.accountList.add(nickname)
-                }.onCompletion {
-                    sendEffect(_viewEffect, LoginViewEffect.RouteToPath(Screen.MainPage, true))
-                }.catch {
-                    sendEffect(_viewEffect, LoginViewEffect.LoginFailed(it.message ?: "未知错误"))
-                }.collect()
-            }
+        }.catch {
+            sendEffect(_viewEffect, LoginViewEffect.LoginFailed(it.message ?: "登录失败"))
+        }.flowOn(Dispatchers.IO).collect()
+    }
+
+    private fun setUser(nickname: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            AppContext.nowNickname = nickname
+            flow<Unit> {
+                // room持久化
+                val cookies = CookiesStore.getCookie(NETEASE_USER_COOKIE)
+                    ?: throw Exception("获取用户信息失败, 请重新登录")
+                val userInfo = UserEntity(
+                    nickname = nickname,
+                    cookies = cookies
+                )
+                // 持久化
+                AppConstant.database.userDao().updateUser(userInfo)
+                AppContext.cookiesStore[nickname] = cookies
+                AppContext.nowNickname = nickname
+                AppContext.accountList.add(nickname)
+            }.onCompletion {
+                sendEffect(_viewEffect, LoginViewEffect.RouteToPath(Screen.MainPage, true))
+            }.catch {
+                sendEffect(_viewEffect, LoginViewEffect.LoginFailed(it.message ?: "未知错误"))
+            }.collect()
         }
     }
 }
@@ -221,7 +228,6 @@ data class LoginViewState(
 ) : IUiState
 
 sealed class LoginViewEffect : IUiEffect {
-    object LoginSuccess : LoginViewEffect()
     data class LoginFailed(val message: String) : LoginViewEffect()
     data class RouteToPath(val path: Screen, val needPop: Boolean = false) : LoginViewEffect()
     data class ShowToast(val message: String, val isError: Boolean = true) : LoginViewEffect()
@@ -232,5 +238,4 @@ sealed class LoginViewAction : IUiAction {
     data class UpdatePassword(val password: String) : LoginViewAction()
     data class UpdateCookies(val cookies: String) : LoginViewAction()
     data object Login : LoginViewAction()
-    data class SetUser(val nickname: String) : LoginViewAction()
 }

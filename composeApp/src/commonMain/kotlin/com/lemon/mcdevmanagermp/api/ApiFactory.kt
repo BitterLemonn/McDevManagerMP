@@ -17,6 +17,7 @@ import io.ktor.http.Cookie
 import io.ktor.http.Url
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.util.AttributeKey
+import kotlin.time.TimeMark
 import kotlin.time.TimeSource
 import io.ktor.client.plugins.logging.Logger as KtorLogger
 
@@ -43,7 +44,7 @@ object ApiFactory {
 
         onResponse { response ->
             val startTime =
-                response.call.request.attributes.getOrNull(AttributeKey<kotlin.time.TimeMark>("StartTime"))
+                response.call.request.attributes.getOrNull(AttributeKey<TimeMark>("StartTime"))
             startTime?.let {
                 val elapsed = it.elapsedNow().inWholeMilliseconds
                 Logger.d("拦截器:\n请求 ${response.call.request.url} 耗时: ${elapsed}ms")
@@ -64,16 +65,16 @@ object ApiFactory {
                 storage = cookiesStorage
             }
             // 3. 日志打印 (替代 CommonInterceptor 中的 body/header 打印)
-            install(Logging) {
-                logger = object : KtorLogger {
-                    override fun log(message: String) {
-                        // 使用你自己的 Logger 输出，Ktor 会自动格式化好 请求头/体/响应
-                        Logger.d("KtorLog:\n$message")
-                    }
-                }
-                // 打印级别：ALL (包含 Headers 和 Body)，对应你原来的 peekBody
-                level = LogLevel.ALL
-            }
+//            install(Logging) {
+//                logger = object : KtorLogger {
+//                    override fun log(message: String) {
+//                        // 使用你自己的 Logger 输出，Ktor 会自动格式化好 请求头/体/响应
+//                        Logger.d("KtorLog:\n$message")
+//                    }
+//                }
+//                // 打印级别：ALL (包含 Headers 和 Body)，对应你原来的 peekBody
+//                level = LogLevel.ALL
+//            }
         }
     }
 

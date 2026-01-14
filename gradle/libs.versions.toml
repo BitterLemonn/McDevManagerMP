@@ -12,13 +12,12 @@ androidx-activity = "1.12.2"
 androidx-lifecycle = "2.9.6"
 composeHotReload = "1.0.0"
 kotlinxSerializationJson = "1.9.0"
-composeMultiplatform = "1.9.3"
+composeMultiplatform = "1.10.0"
 kotlin = "2.3.0"
 kotlinx-coroutines = "1.10.2"
 kotlinx-datetime = "0.7.1"
-ktorfit = "2.7.1"
-logging = "7.0.13"
-log4j = "2.0.17"
+ktorfit = "2.7.2"
+logging = "7.0.14"
 navigationCompose = "2.9.1"
 bignum = "0.3.10"
 room = "2.8.4"
@@ -26,8 +25,8 @@ sqlite = "2.6.2"
 ktor = "3.3.3"
 okio = "3.16.4"
 composeView = "1.9.0.4"
-coil = "3.3.0"
-material3-window-size = "1.9.0"
+landscapist = "2.8.2"
+logback = "1.5.24"
 
 
 [libraries]
@@ -38,7 +37,6 @@ androidx-activity-compose = { module = "androidx.activity:activity-compose", ver
 androidx-lifecycle-viewmodel = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel", version.ref = "androidx-lifecycle" }
 androidx-lifecycle-runtimeCompose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose", version.ref = "androidx-lifecycle" }
 androidx-lifecycle-viewmodel-compose = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "androidx-lifecycle" }
-material-window-size = { module = "org.jetbrains.compose.material3:material3-window-size-class", version.ref = "material3-window-size" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 kotlinx-coroutinesSwing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
@@ -54,10 +52,9 @@ ktor-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version
 ktor-serialization = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
 ktor-logging = { module = "io.ktor:ktor-client-logging", version.ref = "ktor" }
 logging = { module = "io.github.oshai:kotlin-logging", version.ref = "logging" }
-log4j = { module = "org.slf4j:slf4j-simple", version.ref = "log4j" }
+logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 compose-views = { module = "io.github.ltttttttttttt:ComposeViews", version.ref = "composeView" }
-coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
-coil-network = { module = "io.coil-kt.coil3:coil-network-ktor3", version.ref = "coil" }
+landscapist = { module = "com.github.skydoves:landscapist-coil3", version.ref = "landscapist" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

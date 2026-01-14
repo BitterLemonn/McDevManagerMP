@@ -10,8 +10,6 @@ import kotlinx.serialization.Serializable
 data class UserEntity(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     @ColumnInfo val nickname: String,
-    @ColumnInfo val cookies: String,
-    @ColumnInfo val username: String,
-    @ColumnInfo val password: String
+    @ColumnInfo val cookies: String
 )
 

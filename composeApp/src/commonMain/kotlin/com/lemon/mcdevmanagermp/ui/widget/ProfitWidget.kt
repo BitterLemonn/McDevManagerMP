@@ -1,14 +1,23 @@
 package com.lemon.mcdevmanagermp.ui.widget
 
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -21,6 +30,7 @@ import com.lemon.mcdevmanagermp.ui.theme.AppTheme
 import mcdevmanagermp.composeapp.generated.resources.Res
 import mcdevmanagermp.composeapp.generated.resources.ic_diamond
 import mcdevmanagermp.composeapp.generated.resources.ic_download
+import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
@@ -112,6 +122,103 @@ fun ProfitWidget(
 
 }
 
+@Composable
+fun ProfitSplitWidget(
+    curMonthProfit: Int,
+    curMonthDl: Int,
+    lastMonthProfit: Int,
+    lastMonthDl: Int,
+    yesterdayProfit: Int,
+    halfAvgProfit: Int,
+    yesterdayDl: Int,
+    halfAvgDl: Int,
+    isLoading: Boolean = true,
+    onClick: (() -> Unit) = {}
+) {
+    Column(modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min)){
+        Row(modifier = Modifier.fillMaxWidth()){
+            ProfitSingleWidget(
+                modifier = Modifier.weight(1f),
+                icon = Res.drawable.ic_diamond,
+                mainText = "本月收益",
+                mainNum = curMonthProfit,
+                subText = "上月收益",
+                subNum = lastMonthProfit,
+                isLoading = isLoading,
+                onClick = onClick
+            )
+            ProfitSingleWidget(
+                modifier = Modifier.weight(1f),
+                icon = Res.drawable.ic_download,
+                mainText = "本月下载",
+                mainNum = curMonthDl,
+                subText = "上月下载",
+                subNum = lastMonthDl,
+                isLoading = isLoading,
+                onClick = onClick
+            )
+        }
+        Row(modifier = Modifier.fillMaxWidth()){
+            ProfitSingleWidget(
+                modifier = Modifier.weight(1f),
+                icon = Res.drawable.ic_diamond,
+                mainText = "昨日收益",
+                mainNum = yesterdayProfit,
+                subText = "14日均收益",
+                subNum = halfAvgProfit,
+                isLoading = isLoading,
+                onClick = onClick
+            )
+            ProfitSingleWidget(
+                modifier = Modifier.weight(1f),
+                icon = Res.drawable.ic_download,
+                mainText = "昨日下载",
+                mainNum = yesterdayDl,
+                subText = "14日均下载",
+                subNum = halfAvgDl,
+                isLoading = isLoading,
+                onClick = onClick
+            )
+        }
+    }
+
+//    LazyVerticalGrid(
+//        columns = GridCells.Fixed(2),
+//        horizontalArrangement = Arrangement.spacedBy(spacing),
+//        verticalArrangement = Arrangement.spacedBy(spacing, Alignment.CenterVertically),
+//        modifier = Modifier
+//            .fillMaxWidth()
+//            .animateContentSize()
+//    ) {
+//        items(indexList, key = { it }) { index ->
+//            Box(
+//                modifier = Modifier
+//                    .height(140.dp)
+//            ) {
+//                val item = items[index]
+//                ProfitSingleWidget(
+//                    modifier = Modifier.fillMaxWidth(),
+//                    icon = item.icon,
+//                    mainText = item.mainText,
+//                    mainNum = item.mainNum,
+//                    subText = item.subText,
+//                    subNum = item.subNum,
+//                    isLoading = isLoading,
+//                    onClick = onClick
+//                )
+//            }
+//        }
+//    }
+}
+
+private data class ProfitItem(
+    val icon: DrawableResource,
+    val mainText: String,
+    val mainNum: Int,
+    val subText: String,
+    val subNum: Int
+)
+
 @Preview(showBackground = true)
 @Composable
 private fun ProfitWidgetPreview() {
@@ -124,6 +231,22 @@ private fun ProfitWidgetPreview() {
         lastMonthDl = 5,
         halfAvgProfit = 200000000,
         halfAvgDl = 8,
+        isLoading = false
+    )
+}
+
+@Preview(showBackground = true, widthDp = 800)
+@Composable
+private fun ProfitSplitWidgetPreview() {
+    ProfitSplitWidget(
+        curMonthProfit = 0,
+        curMonthDl = 0,
+        yesterdayProfit = 0,
+        yesterdayDl = 0,
+        lastMonthProfit = 0,
+        lastMonthDl = 0,
+        halfAvgProfit = 0,
+        halfAvgDl = 0,
         isLoading = false
     )
 }

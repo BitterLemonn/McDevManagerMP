@@ -34,10 +34,11 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.toFontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil3.compose.AsyncImage
 import com.lemon.mcdevmanagermp.extension.formatDecimal
 import com.lemon.mcdevmanagermp.ui.theme.AppTheme
 import com.lemon.mcdevmanagermp.utils.LevelResourceUtils
+import com.skydoves.landscapist.ImageOptions
+import com.skydoves.landscapist.coil3.CoilImage
 import mcdevmanagermp.composeapp.generated.resources.Res
 import mcdevmanagermp.composeapp.generated.resources.img_avatar
 import mcdevmanagermp.composeapp.generated.resources.minecraft_ae
@@ -98,16 +99,20 @@ fun MainUserCard(
                         indication = ripple()
                     ) { onClickAvatar() }
             ) {
-                AsyncImage(
-                    model = avatarUrl,
-                    contentDescription = "avatar image",
-                    contentScale = ContentScale.Crop,
+                CoilImage(
+                    imageModel = { avatarUrl },
+                    imageOptions = ImageOptions(
+                        contentDescription = "avatar image",
+                        contentScale = ContentScale.Crop,
+                    ),
                     modifier = Modifier
                         .padding(8.dp)
                         .size(28.dp)
                         .clip(CircleShape)
                         .align(Alignment.CenterVertically),
-                    placeholder = painterResource(Res.drawable.img_avatar)
+                    loading = {
+                        painterResource(Res.drawable.img_avatar)
+                    }
                 )
                 Text(
                     text = username,

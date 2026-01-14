@@ -2,8 +2,10 @@ package com.lemon.mcdevmanagermp.utils
 
 import com.lemon.mcdevmanagermp.getLogDirectory
 import io.github.oshai.kotlinlogging.KotlinLogging
+import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.minus
 import kotlinx.datetime.toLocalDateTime
 import okio.FileSystem
 import okio.Path
@@ -66,7 +68,8 @@ object Logger {
     fun debug(message: String) {
         if (logLevel > 0) return
         logger.debug { message }
-        writeLog("DEBUG", message)
+        // debug日志不写入文件
+//        writeLog("DEBUG", message)
     }
 
     private fun getLogFile(): Path {
@@ -142,6 +145,30 @@ object Logger {
             }
         } catch (e: Exception) {
             println("无法写入日志文件: ${e.message}")
+        }
+    }
+
+    fun autoDeleteOldLogs(days: Int = 3) {
+        try {
+            val cutoffDate = Clock.System.now()
+                .toLocalDateTime(TimeZone.currentSystemDefault())
+                .date
+                .minus(days, DateTimeUnit.DAY)
+
+            FileSystem.SYSTEM.list(logDir).forEach { path ->
+                val fileName = path.name
+                val regex = Regex("""app-(\d{4}-\d{2}-\d{2})(-\d+)?\.log""")
+                val matchResult = regex.find(fileName)
+                if (matchResult != null) {
+                    val dateString = matchResult.groupValues[1]
+                    val fileDate = LocalDate.parse(dateString)
+                    if (fileDate < cutoffDate) {
+                        FileSystem.SYSTEM.delete(path)
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            println("无法删除旧日志文件: ${e.message}")
         }
     }
 }

@@ -3,6 +3,8 @@ package com.lemon.mcdevmanagermp.ui.theme
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.TweenSpec
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Typography
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Stable
@@ -13,6 +15,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import com.lemon.mcdevmanagermp.extension.applyDefaultFont
+import mcdevmanagermp.composeapp.generated.resources.MiSans_Regular
+import mcdevmanagermp.composeapp.generated.resources.Res
+import org.jetbrains.compose.resources.Font
 
 
 private val DarkColorPalette = AppColors(
@@ -68,12 +76,14 @@ object AppTheme {
 @Composable
 fun MCDevManagerTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // KMP 中通常移除 dynamicColor，因为它是 Android 12+ 专有的
     content: @Composable () -> Unit
 ) {
+    val fontDefault = FontFamily(Font(Res.font.MiSans_Regular))
+    val appTypography = Typography().applyDefaultFont(fontDefault)
+
     val targetColors = if (darkTheme) DarkColorPalette else LightColorPalette
 
-    // 2. 颜色动画过渡 (保持你的逻辑)
+    // 颜色动画过渡
     val textColor by animateColorAsState(targetColors.textColor, TweenSpec(600))
     val hintColor by animateColorAsState(targetColors.hintColor, TweenSpec(600))
     val dividerColor by animateColorAsState(targetColors.dividerColor, TweenSpec(600))
@@ -89,26 +99,29 @@ fun MCDevManagerTheme(
     val error by animateColorAsState(targetColors.error, TweenSpec(600))
 
     // 构造当前状态的 appColors
-    val appColors = remember(darkTheme) { // 使用 remember 优化性能
-        AppColors(
-            textColor = textColor,
-            hintColor = hintColor,
-            dividerColor = dividerColor,
-            imgTintColor = imgTintColor,
-            card = card,
-            background = background,
-            primaryColor = primaryColor,
-            primarySubColor = primarySubColor,
-            secondaryColor = secondaryColor,
-            info = info,
-            warn = warn,
-            success = success,
-            error = error,
-            lineChartColors = targetColors.chartColors
+    val appColors = AppColors(
+        textColor = textColor,
+        hintColor = hintColor,
+        dividerColor = dividerColor,
+        imgTintColor = imgTintColor,
+        card = card,
+        background = background,
+        primaryColor = primaryColor,
+        primarySubColor = primarySubColor,
+        secondaryColor = secondaryColor,
+        info = info,
+        warn = warn,
+        success = success,
+        error = error,
+        lineChartColors = targetColors.chartColors
+    )
+
+    CompositionLocalProvider(LocalAppColors provides appColors) {
+        MaterialTheme(
+            typography = appTypography,
+            content = content
         )
     }
-
-    CompositionLocalProvider(LocalAppColors provides appColors, content = content)
 }
 
 class AppColors(

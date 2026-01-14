@@ -48,14 +48,14 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.ImageLoader
-import coil3.compose.AsyncImage
-import coil3.compose.LocalPlatformContext
 import com.lemon.mcdevmanagermp.data.common.JSONConverter
 import com.lemon.mcdevmanagermp.data.netease.feedback.ConflictModsBean
 import com.lemon.mcdevmanagermp.ui.theme.AppTheme
 import com.lemon.mcdevmanagermp.ui.theme.MCDevManagerTheme
 import com.lemon.mcdevmanagermp.utils.Logger
 import com.lemon.mcdevmanagermp.utils.formatTime
+import com.skydoves.landscapist.ImageOptions
+import com.skydoves.landscapist.coil3.CoilImage
 import mcdevmanagermp.composeapp.generated.resources.Res
 import mcdevmanagermp.composeapp.generated.resources.ic_mod
 import mcdevmanagermp.composeapp.generated.resources.ic_no_reply
@@ -197,10 +197,8 @@ fun FeedbackCard(
             modifier = Modifier.fillMaxWidth().padding(4.dp)
         ) {
             picList.forEach {
-                AsyncImage(
-                    model = it,
-                    contentDescription = "feedback image",
-                    imageLoader = ImageLoader(LocalPlatformContext.current),
+                CoilImage(
+                    imageModel = { it },
                     modifier = Modifier.padding(8.dp).wrapContentHeight().heightIn(max = 160.dp)
                         .wrapContentWidth().clip(RoundedCornerShape(8.dp)).clickable(
                             interactionSource = remember { MutableInteractionSource() },
@@ -208,7 +206,9 @@ fun FeedbackCard(
                         ) {
                             onClickImg(it)
                         },
-                    contentScale = ContentScale.Fit
+                    imageOptions = ImageOptions(
+                        contentScale = ContentScale.Fit
+                    )
                 )
             }
         }

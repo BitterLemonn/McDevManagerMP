@@ -53,7 +53,6 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodel.compose)
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.androidx.lifecycle.runtimeCompose)
-            implementation(libs.material.window.size)
             // coroutines
             implementation(libs.kotlinx.coroutines.core)
             // kotlin Serialization
@@ -62,7 +61,7 @@ kotlin {
             implementation(libs.navigation.compose)
             // logging
             implementation(libs.logging)
-            api(libs.log4j)
+            // api(libs.log4j)
             // encryption
             implementation(libs.bcprov.jdk15on)
             // room
@@ -76,14 +75,14 @@ kotlin {
             implementation(libs.ktor.logging)
             // composeView
             implementation(libs.compose.views)
-            // coil
-            implementation(libs.coil.compose)
-            implementation(libs.coil.network)
+            // landscapist
+            implementation(libs.landscapist)
         }
         // jvmMain
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutinesSwing)
+            implementation(libs.logback.classic)
         }
         iosMain.dependencies {
             // BigNum
@@ -134,6 +133,7 @@ dependencies {
 compose.desktop {
     application {
         mainClass = "com.lemon.mcdevmanagermp.MainKt"
+        jvmArgs += listOf("-Dfile.encoding=UTF-8")
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)

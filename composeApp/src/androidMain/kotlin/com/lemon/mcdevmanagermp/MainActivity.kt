@@ -18,7 +18,8 @@ class MainActivity : ComponentActivity() {
 
         // 初始化日志
         System.setProperty("kotlin-logging-to-android-native", "true")
-        System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", Logger.LOG_LEVEL)
+        // 删除过期日志文件
+        Logger.autoDeleteOldLogs()
         AndroidLogContext.setContext(this)
 
         // 初始化数据库依赖

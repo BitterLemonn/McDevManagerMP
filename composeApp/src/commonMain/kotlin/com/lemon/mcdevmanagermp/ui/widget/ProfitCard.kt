@@ -21,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.toFontFamily
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lemon.mcdevmanagermp.extension.formatDecimal
@@ -37,6 +38,7 @@ fun ProfitCard(
     title: String,
     realMoney: String,
     taxMoney: String,
+    elevation: Dp = 0.dp,
     isLoading: Boolean = true
 ) {
     if (!isLoading)
@@ -46,7 +48,8 @@ fun ProfitCard(
                 .padding(8.dp),
             colors = CardDefaults.cardColors(
                 containerColor = AppTheme.colors.card
-            )
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = elevation),
         ) {
             Row(
                 Modifier

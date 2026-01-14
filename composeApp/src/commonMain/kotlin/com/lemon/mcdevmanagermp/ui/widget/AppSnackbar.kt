@@ -6,12 +6,14 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import com.lemon.mcdevmanagermp.ui.theme.AppTheme
-import com.lemon.mcdevmanagermp.widget.SNACK_ERROR
-import com.lemon.mcdevmanagermp.widget.SNACK_INFO
-import com.lemon.mcdevmanagermp.widget.SNACK_SUCCESS
-import com.lemon.mcdevmanagermp.widget.SNACK_WARN
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+
+
+const val SNACK_INFO = "确定"
+const val SNACK_WARN = " "
+const val SNACK_ERROR = "  "
+const val SNACK_SUCCESS = "OK"
 
 @Composable
 fun AppSnackbar(

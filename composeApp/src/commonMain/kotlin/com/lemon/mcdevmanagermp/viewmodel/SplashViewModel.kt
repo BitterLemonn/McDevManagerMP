@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.lemon.mcdevmanagermp.data.AppConstant
 import com.lemon.mcdevmanagermp.data.AppContext
 import com.lemon.mcdevmanagermp.data.Screen
+import com.lemon.mcdevmanagermp.data.common.CookiesStore
+import com.lemon.mcdevmanagermp.data.common.NETEASE_USER_COOKIE
 import com.lemon.mcdevmanagermp.extension.IUiEffect
 import com.lemon.mcdevmanagermp.extension.createEffectFlow
 import com.lemon.mcdevmanagermp.extension.sendEffect
@@ -34,8 +36,10 @@ class SplashViewModel : ViewModel() {
                 userInfoList.let {
                     if (userInfoList.isNotEmpty()) {
                         for (user in userInfoList) {
-                            if (userInfoList.indexOf(user) == 0)
+                            if (userInfoList.indexOf(user) == 0) {
                                 AppContext.nowNickname = user.nickname
+                                CookiesStore.addCookie(NETEASE_USER_COOKIE, user.cookies)
+                            }
                             AppContext.cookiesStore[user.nickname] = user.cookies
                         }
                         AppContext.accountList.addAll(userInfoList.map { it.nickname })

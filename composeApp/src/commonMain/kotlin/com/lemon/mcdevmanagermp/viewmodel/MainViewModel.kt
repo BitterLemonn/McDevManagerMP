@@ -5,9 +5,15 @@ import androidx.lifecycle.viewModelScope
 import com.lemon.mcdevmanagermp.data.AppConstant
 import com.lemon.mcdevmanagermp.data.AppContext
 import com.lemon.mcdevmanagermp.data.Screen
-import com.lemon.mcdevmanagermp.data.common.CookiesStore
-import com.lemon.mcdevmanagermp.data.common.NETEASE_USER_COOKIE
 import com.lemon.mcdevmanagermp.data.database.entities.OverviewEntity
+import com.lemon.mcdevmanagermp.data.netease.rankList.CommonRankListResponseBean
+import com.lemon.mcdevmanagermp.data.page.RankCategoryContent
+import com.lemon.mcdevmanagermp.data.page.RankCategoryData
+import com.lemon.mcdevmanagermp.data.page.RankCategoryTypeEnum
+import com.lemon.mcdevmanagermp.data.page.RankListItemData
+import com.lemon.mcdevmanagermp.data.netease.rankList.RankListResponseBean
+import com.lemon.mcdevmanagermp.data.page.RankSubCategoryTypeEnum
+import com.lemon.mcdevmanagermp.data.page.commonRankCategoryContent
 import com.lemon.mcdevmanagermp.data.netease.resource.ResourceBean
 import com.lemon.mcdevmanagermp.data.repository.DetailRepository
 import com.lemon.mcdevmanagermp.data.repository.MainRepository
@@ -38,6 +44,8 @@ import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
@@ -59,39 +67,32 @@ class MainViewModel : ViewModel() {
 
     fun dispatch(action: MainViewAction) {
         when (action) {
-            is MainViewAction.LoadData -> loadData(action.nickname)
+            is MainViewAction.LoadData -> loadData(action.forceReload)
             is MainViewAction.DeleteAccount -> deleteAccount(action.accountName)
             is MainViewAction.ChangeAccount -> changeAccount(action.accountName)
+            is MainViewAction.GetRankData -> getRankData(action.category, action.subCategory)
         }
     }
 
-    private fun loadData(nickname: String) {
-        Logger.d("loadData: $nickname")
+    private fun loadData(forceReload: Boolean) {
         viewModelScope.launch(Dispatchers.IO) {
             flow<Unit> {
-                val cookie = AppContext.cookiesStore[nickname]
-                    ?: throw Exception("未找到用户信息, 请重新登录")
-                CookiesStore.addCookie(NETEASE_USER_COOKIE, cookie)
+                // 先获取用户信息
                 getUserInfoLogic()
-                getOverviewLogic()
+
+                // 再获取概览信息
+                getOverviewLogic(forceReload)
             }.onStart {
-                _viewStates.setState {
-                    copy(
-                        isLoadingOverview = true, isLoadingProfit = true
-                    )
-                }
-                CookiesStore.clearCookies()
-            }.catch {
-                if (it !is CancellationException) {
-                    sendEffect(_viewEffects, MainViewEffect.ShowToast(it.message ?: "未知错误"))
-                    _viewStates.setState { copy(isLoadingOverview = false) }
-                } else {
-                    Logger.d(it.message ?: "未知错误")
-                }
+                // 开始加载时，设置为加载状态
+                _viewStates.setState { copy(isLoadingOverview = true) }
             }.onCompletion {
-                CookiesStore.clearCookies()
+                // 完成后，取消加载状态
                 _viewStates.setState { copy(isLoadingOverview = false) }
-            }.flowOn(Dispatchers.IO).collect()
+            }.catch {
+                // 处理异常
+                Logger.e("加载数据失败: ${it.message}")
+                sendEffect(_viewEffects, MainViewEffect.ShowToast("加载数据失败: ${it.message}"))
+            }.collect()
         }
     }
 
@@ -179,7 +180,7 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    private suspend fun getOverviewLogic() {
+    private suspend fun getOverviewLogic(forceReload: Boolean) {
         val overviewEntity = withContext(Dispatchers.IO) {
             AppConstant.database.infoDao().getLatestOverviewByNickname(AppContext.nowNickname)
         }
@@ -191,11 +192,11 @@ class MainViewModel : ViewModel() {
 
             var isLoad = false
             if (overviewEntity.yesterdayDownload != 0) isLoad = true
-            else if (chinaTime.hour > 11 || (chinaTime.hour == 11 && chinaTime.minute >= 30)) isLoad =
-                true
+            else if (chinaTime.hour > 11 || (chinaTime.hour == 11 && chinaTime.minute >= 30))
+                isLoad = true
             if (isDifferentDay(overviewEntity.timestamp)) isLoad = false
 
-            if (isLoad) {
+            if (isLoad && !forceReload) {
                 _viewStates.setState {
                     copy(
                         curMonthProfit = overviewEntity.thisMonthDiamond,
@@ -222,6 +223,7 @@ class MainViewModel : ViewModel() {
 
     private suspend fun getOverviewByServer() {
         // 只有需要请求概览数据时才请求资源列表
+        _viewStates.setState { copy(isLoadingProfit = true) }
         getResListLogic()
         when (val overview = mainRepository.getOverview()) {
             is NetworkState.Success -> {
@@ -318,7 +320,7 @@ class MainViewModel : ViewModel() {
         viewModelScope.launch {
             delay(100)
             AppContext.nowNickname = accountName
-            loadData(AppContext.nowNickname)
+            loadData(true)
         }
     }
 
@@ -370,44 +372,48 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    private suspend fun getOneMonthProfit(year: Int, month: Int): Double {
-        var monthProfit = 0.0
-        flow {
-            for (itemId in viewStates.value.resList) {
-                when (val result =
-                    realtimeProfitRepository.getOneMonthDetail("pe", itemId.itemId, year, month)) {
-                    is NetworkState.Success -> {
-                        result.data?.let { profit ->
-                            emit(profit.totalDiamonds)
-                        } ?: throw Exception("获取收益失败")
-                    }
+    private suspend fun getOneMonthProfit(year: Int, month: Int): Double =
+        withContext(Dispatchers.IO) {
+            try {
+                val deferreds = viewStates.value.resList.map { itemId ->
+                    async {
+                        when (val result =
+                            realtimeProfitRepository.getOneMonthDetail(
+                                "pe",
+                                itemId.itemId,
+                                year,
+                                month
+                            )) {
+                            is NetworkState.Success -> {
+                                result.data?.totalDiamonds ?: throw Exception("获取收益失败")
+                            }
 
-                    is NetworkState.Error -> {
-                        Logger.e("获取收益失败: ${result.msg}")
-                        if (result.e is UnifiedExceptionHandler.CookiesExpiredException) {
-                            sendEffect(
-                                _viewEffects,
-                                MainViewEffect.RouteToPath(Screen.LoginPage, true)
-                            )
-                            throw result.e
-                        } else {
-                            throw Exception("获取收益失败: ${result.msg}")
+                            is NetworkState.Error -> {
+                                Logger.e("获取收益失败: ${result.msg}")
+                                if (result.e is UnifiedExceptionHandler.CookiesExpiredException) {
+                                    sendEffect(
+                                        _viewEffects,
+                                        MainViewEffect.RouteToPath(Screen.LoginPage, true)
+                                    )
+                                    throw result.e
+                                } else {
+                                    throw Exception("获取收益失败: ${result.msg}")
+                                }
+                            }
                         }
                     }
                 }
+                deferreds.awaitAll().sumOf { (it as Number).toDouble() }
+            } catch (e: Exception) {
+                if (e !is CancellationException) {
+                    sendEffect(_viewEffects, MainViewEffect.ShowToast(e.message ?: "未知错误"))
+                    _viewStates.setState { copy(isLoadingProfit = false) }
+                } else {
+                    Logger.d(e.message ?: "未知错误")
+                }
+                0.0
             }
-        }.catch {
-            if (it !is CancellationException) {
-                sendEffect(_viewEffects, MainViewEffect.ShowToast(it.message ?: "未知错误"))
-                _viewStates.setState { copy(isLoadingProfit = false) }
-            } else {
-                Logger.d(it.message ?: "未知错误")
-            }
-        }.flowOn(Dispatchers.IO).collect {
-            monthProfit += it
         }
-        return monthProfit
-    }
 
     private fun isDifferentDay(timestamp: Long): Boolean {
         val timeZone = TimeZone.of("Asia/Shanghai")
@@ -441,6 +447,268 @@ class MainViewModel : ViewModel() {
     private fun getTaxMoney(realMoney: Double): Double {
         return if (realMoney < 800) 0.0 else if (realMoney < 4000) (realMoney - 800) * 0.2 else (realMoney * 0.8) * 0.2
     }
+
+    private fun getRankData(
+        category: RankCategoryTypeEnum,
+        subCategory: RankSubCategoryTypeEnum? = null
+    ) {
+        viewModelScope.launch(Dispatchers.IO) {
+            flow<Unit> {
+                val firstType = when (subCategory) {
+                    RankSubCategoryTypeEnum.MOD -> 2
+                    RankSubCategoryTypeEnum.MAP -> 1
+                    RankSubCategoryTypeEnum.RESOURCE_PACK -> 3
+                    RankSubCategoryTypeEnum.SERVER -> 6
+                    else -> 0
+                }
+
+                val firstTypePc = when (subCategory) {
+                    RankSubCategoryTypeEnum.MOD -> 3
+                    RankSubCategoryTypeEnum.MAP -> 5
+                    RankSubCategoryTypeEnum.RESOURCE_PACK -> 4
+                    RankSubCategoryTypeEnum.SERVER -> 11
+                    else -> 0
+                }
+                val subCategoryName = subCategory?.typeName
+                when (category) {
+                    RankCategoryTypeEnum.PE_HOT -> getPeHotRankListLogic(firstType, subCategoryName)
+                    RankCategoryTypeEnum.HOT_SEARCH -> getHotSearchRankListLogic(firstType)
+                    RankCategoryTypeEnum.PE_DOWNLOAD -> getPeDownloadRankListLogic(
+                        firstType,
+                        subCategoryName
+                    )
+
+                    RankCategoryTypeEnum.PE_SELL -> getPeSellRankListLogic(
+                        firstType,
+                        subCategoryName
+                    )
+
+                    RankCategoryTypeEnum.PC_DOWNLOAD -> getPcDownloadRankListLogic(
+                        firstTypePc,
+                        subCategoryName
+                    )
+
+                    RankCategoryTypeEnum.PC_LIKE -> getPcLikeRankListLogic(
+                        firstTypePc,
+                        subCategoryName
+                    )
+                }
+            }.catch {
+                if (it !is CancellationException) {
+                    sendEffect(_viewEffects, MainViewEffect.ShowToast(it.message ?: "未知错误"))
+                } else {
+                    Logger.d(it.message ?: "未知错误")
+                }
+            }.flowOn(Dispatchers.IO).collect()
+        }
+    }
+
+    private fun updateRankListState(
+        category: String,
+        subCategory: String? = null,
+        items: List<RankListItemData>
+    ) {
+        _viewStates.setState {
+            val newList = rankListData.map { item ->
+                if (item.categoryTitle == category) {
+                    val newContent = when (val content = item.content) {
+                        is RankCategoryContent.Single -> content.copy(list = items)
+                        is RankCategoryContent.Multi -> {
+                            val newGroups = content.groups.map { group ->
+                                if (group.categoryName == subCategory) group.copy(data = items)
+                                else group
+                            }
+                            RankCategoryContent.Multi(newGroups)
+                        }
+                    }
+                    item.copy(content = newContent)
+                } else item
+            }
+            copy(rankListData = newList)
+        }
+    }
+
+    private fun updateCommonRankListState(
+        category: String,
+        subCategory: String?,
+        items: RankListResponseBean<CommonRankListResponseBean>
+    ) {
+        val rankItems = items.data.mapIndexed { index, bean ->
+            RankListItemData(
+                title = bean.itemName,
+                rank = index + 1,
+                rankChange = bean.rankChange,
+                isNew = bean.isNew
+            )
+        }
+        // 更新状态
+        updateRankListState(category, subCategory, rankItems)
+    }
+
+    private suspend fun getPeHotRankListLogic(firstType: Int, subCategoryName: String? = null) {
+        when (val result = mainRepository.getPeHotRankList(firstType)) {
+            is NetworkState.Success -> {
+                result.data?.let { rankListResponse ->
+                    val rankItems = rankListResponse.data.mapIndexed { index, bean ->
+                        RankListItemData(
+                            title = bean.resName,
+                            rank = index + 1,
+                            rankChange = bean.rankChange,
+                            isNew = bean.isNew,
+                            imgUrl = bean.iconUrl
+                        )
+                    }
+                    // 更新状态
+                    updateRankListState(
+                        RankCategoryTypeEnum.PE_HOT.typeName,
+                        subCategoryName,
+                        rankItems
+                    )
+                } ?: throw Exception("获取手游热门飙升榜失败")
+            }
+
+            is NetworkState.Error -> {
+                Logger.e("获取手游热门飙升榜失败: ${result.msg}")
+                if (result.e is UnifiedExceptionHandler.CookiesExpiredException) {
+                    sendEffect(_viewEffects, MainViewEffect.RouteToPath(Screen.LoginPage, true))
+                    throw result.e
+                } else {
+                    throw Exception("获取手游热门飙升榜失败: ${result.msg}")
+                }
+            }
+        }
+    }
+
+    private suspend fun getHotSearchRankListLogic(firstType: Int) {
+        when (val result = mainRepository.getHotSearchRankList(firstType)) {
+            is NetworkState.Success -> {
+                result.data?.let { rankListResponse ->
+                    val rankItems = rankListResponse.data.mapIndexed { index, bean ->
+                        RankListItemData(
+                            title = bean.content,
+                            rank = index + 1,
+                            rankChange = bean.rankChange,
+                            isNew = bean.isNew
+                        )
+                    }
+                    // 更新状态
+                    updateRankListState(RankCategoryTypeEnum.HOT_SEARCH.typeName, null, rankItems)
+                } ?: throw Exception("获取热搜榜失败")
+            }
+
+            is NetworkState.Error -> {
+                Logger.e("获取热搜榜失败: ${result.msg}")
+                if (result.e is UnifiedExceptionHandler.CookiesExpiredException) {
+                    sendEffect(_viewEffects, MainViewEffect.RouteToPath(Screen.LoginPage, true))
+                    throw result.e
+                } else {
+                    throw Exception("获取热搜榜失败: ${result.msg}")
+                }
+            }
+        }
+    }
+
+    private suspend fun getPeDownloadRankListLogic(
+        firstType: Int,
+        subCategoryName: String? = null
+    ) {
+        when (val result = mainRepository.getPeDownloadRankList(firstType)) {
+            is NetworkState.Success -> {
+                result.data?.let { rankListResponse ->
+                    updateCommonRankListState(
+                        RankCategoryTypeEnum.PE_DOWNLOAD.typeName,
+                        subCategoryName,
+                        rankListResponse
+                    )
+                } ?: throw Exception("获取手游免费榜失败")
+            }
+
+            is NetworkState.Error -> {
+                Logger.e("获取手游免费榜失败: ${result.msg}")
+                if (result.e is UnifiedExceptionHandler.CookiesExpiredException) {
+                    sendEffect(_viewEffects, MainViewEffect.RouteToPath(Screen.LoginPage, true))
+                    throw result.e
+                } else {
+                    throw Exception("获取手游免费榜失败: ${result.msg}")
+                }
+            }
+        }
+    }
+
+    private suspend fun getPeSellRankListLogic(firstType: Int, subCategoryName: String? = null) {
+        when (val result = mainRepository.getPeSellRankList(firstType)) {
+            is NetworkState.Success -> {
+                result.data?.let { rankListResponse ->
+                    updateCommonRankListState(
+                        RankCategoryTypeEnum.PE_SELL.typeName,
+                        subCategoryName,
+                        rankListResponse
+                    )
+                } ?: throw Exception("获取手游畅销榜失败")
+            }
+
+            is NetworkState.Error -> {
+                Logger.e("获取手游畅销榜失败: ${result.msg}")
+                if (result.e is UnifiedExceptionHandler.CookiesExpiredException) {
+                    sendEffect(_viewEffects, MainViewEffect.RouteToPath(Screen.LoginPage, true))
+                    throw result.e
+                } else {
+                    throw Exception("获取手游畅销榜失败: ${result.msg}")
+                }
+            }
+        }
+    }
+
+    private suspend fun getPcDownloadRankListLogic(
+        firstType: Int,
+        subCategoryName: String? = null
+    ) {
+        when (val result = mainRepository.getPcDownloadRankList(firstType)) {
+            is NetworkState.Success -> {
+                result.data?.let { rankListResponse ->
+                    updateCommonRankListState(
+                        RankCategoryTypeEnum.PC_DOWNLOAD.typeName,
+                        subCategoryName,
+                        rankListResponse
+                    )
+                } ?: throw Exception("获取端游下载榜失败")
+            }
+
+            is NetworkState.Error -> {
+                Logger.e("获取端游下载榜失败: ${result.msg}")
+                if (result.e is UnifiedExceptionHandler.CookiesExpiredException) {
+                    sendEffect(_viewEffects, MainViewEffect.RouteToPath(Screen.LoginPage, true))
+                    throw result.e
+                } else {
+                    throw Exception("获取端游下载榜失败: ${result.msg}")
+                }
+            }
+        }
+    }
+
+    private suspend fun getPcLikeRankListLogic(firstType: Int, subCategoryName: String? = null) {
+        when (val result = mainRepository.getPcLikeRankList(firstType)) {
+            is NetworkState.Success -> {
+                result.data?.let { rankListResponse ->
+                    updateCommonRankListState(
+                        RankCategoryTypeEnum.PC_LIKE.typeName,
+                        subCategoryName,
+                        rankListResponse
+                    )
+                } ?: throw Exception("获取端游点赞榜失败")
+            }
+
+            is NetworkState.Error -> {
+                Logger.e("获取端游点赞榜失败: ${result.msg}")
+                if (result.e is UnifiedExceptionHandler.CookiesExpiredException) {
+                    sendEffect(_viewEffects, MainViewEffect.RouteToPath(Screen.LoginPage, true))
+                    throw result.e
+                } else {
+                    throw Exception("获取端游点赞榜失败: ${result.msg}")
+                }
+            }
+        }
+    }
 }
 
 data class MainViewState(
@@ -473,6 +741,17 @@ data class MainViewState(
     val contributionScore: String = "0",
 
     val resList: List<ResourceBean> = emptyList(),
+    val rankListData: List<RankCategoryData> = listOf(
+        RankCategoryData(RankCategoryTypeEnum.PE_HOT.typeName, commonRankCategoryContent),
+        RankCategoryData(
+            RankCategoryTypeEnum.HOT_SEARCH.typeName,
+            RankCategoryContent.Single(emptyList())
+        ),
+        RankCategoryData(RankCategoryTypeEnum.PE_DOWNLOAD.typeName, commonRankCategoryContent),
+        RankCategoryData(RankCategoryTypeEnum.PE_SELL.typeName, commonRankCategoryContent),
+        RankCategoryData(RankCategoryTypeEnum.PC_DOWNLOAD.typeName, commonRankCategoryContent),
+        RankCategoryData(RankCategoryTypeEnum.PC_LIKE.typeName, commonRankCategoryContent)
+    ),
 
     val realMoney: String = "0.00",
     val taxMoney: String = "0.00",
@@ -491,7 +770,11 @@ sealed class MainViewEffect : IUiEffect {
 }
 
 sealed class MainViewAction : IUiAction {
-    data class LoadData(val nickname: String) : MainViewAction()
+    data class LoadData(val forceReload: Boolean = false) : MainViewAction()
     data class DeleteAccount(val accountName: String) : MainViewAction()
     data class ChangeAccount(val accountName: String) : MainViewAction()
+    data class GetRankData(
+        val category: RankCategoryTypeEnum,
+        val subCategory: RankSubCategoryTypeEnum? = null
+    ) : MainViewAction()
 }

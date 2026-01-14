@@ -1,5 +1,16 @@
 package com.lemon.mcdevmanagermp.data.common
 
+import androidx.compose.ui.unit.dp
+
+// 布局大小
+val MAX_COMPACT_WIDTH = 600.dp
+val MAX_MEDIUM_WIDTH = 840.dp
+
+// 布局模式
+const val LAYOUT_MODE_COMPACT = 0
+const val LAYOUT_MODE_MEDIUM = 1
+const val LAYOUT_MODE_EXPANDED = 2
+
 // 数据库名称
 const val DATABASE_NAME = "mc_dev_manager.db"
 

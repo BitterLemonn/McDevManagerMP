@@ -5,6 +5,8 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class CommentBean(
+    @SerialName("_id")
+    val id: String,
     @SerialName("comment_tag")
     val commentTag: String,
     val iid: String,

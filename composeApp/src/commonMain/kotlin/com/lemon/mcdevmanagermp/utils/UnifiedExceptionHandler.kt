@@ -140,7 +140,7 @@ object UnifiedExceptionHandler {
             AppConstant.database.userDao().getUserByNickname(AppContext.nowNickname)?.let {
                 val user = it.copy(cookies = returnCookies)
                 AppConstant.database.userDao().updateUser(user)
-                Logger.d("用户${AppContext.nowNickname}的cookie已更新: $returnCookies")
+//                Logger.d("用户${AppContext.nowNickname}的cookie已更新: $returnCookies")
             } ?: run {
                 Logger.e("用户${AppContext.nowNickname}不存在")
             }
