@@ -11,7 +11,6 @@ import com.lemon.mcdevmanagermp.data.common.NETEASE_USER_COOKIE
 import com.lemon.mcdevmanagermp.data.database.entities.UserEntity
 import com.lemon.mcdevmanagermp.data.netease.login.PVInfo
 import com.lemon.mcdevmanagermp.data.netease.login.PVResultStrBean
-import com.lemon.mcdevmanagermp.data.repository.DetailRepository
 import com.lemon.mcdevmanagermp.data.repository.LoginRepository
 import com.lemon.mcdevmanagermp.data.repository.MainRepository
 import com.lemon.mcdevmanagermp.extension.IUiAction
@@ -37,7 +36,6 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class LoginViewModel : ViewModel() {
     private val loginRepository = LoginRepository.INSTANCE
@@ -180,8 +178,12 @@ class LoginViewModel : ViewModel() {
         flow<Unit> {
             when (val result = mainRepository.getUserInfo()) {
                 is NetworkState.Success -> {
-                    val nickname = result.data?.nickname ?: _viewState.value.username
-                    setUser(nickname)
+                    val nickname = result.data?.nickname
+                    val avatarUrl = result.data?.headImg
+                    if (nickname.isNullOrEmpty() || avatarUrl.isNullOrEmpty()) {
+                        throw Exception("登录失败, 无法获取正确的开发者信息")
+                    }
+                    setUser(nickname, avatarUrl)
                     sendEffect(_viewEffect, LoginViewEffect.ShowToast("登录成功", false))
                     sendEffect(_viewEffect, LoginViewEffect.RouteToPath(Screen.MainPage, true))
                 }
@@ -195,21 +197,22 @@ class LoginViewModel : ViewModel() {
         }.flowOn(Dispatchers.IO).collect()
     }
 
-    private fun setUser(nickname: String) {
+    private fun setUser(nickname: String, avatarUrl: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            AppContext.nowNickname = nickname
+            AppContext.userName = nickname
             flow<Unit> {
                 // room持久化
                 val cookies = CookiesStore.getCookie(NETEASE_USER_COOKIE)
                     ?: throw Exception("获取用户信息失败, 请重新登录")
                 val userInfo = UserEntity(
                     nickname = nickname,
-                    cookies = cookies
+                    cookies = cookies,
+                    avatarUrl = avatarUrl
                 )
                 // 持久化
                 AppConstant.database.userDao().updateUser(userInfo)
                 AppContext.cookiesStore[nickname] = cookies
-                AppContext.nowNickname = nickname
+                AppContext.userName = nickname
                 AppContext.accountList.add(nickname)
             }.onCompletion {
                 sendEffect(_viewEffect, LoginViewEffect.RouteToPath(Screen.MainPage, true))

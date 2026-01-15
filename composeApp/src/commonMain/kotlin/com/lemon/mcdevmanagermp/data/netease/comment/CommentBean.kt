@@ -22,7 +22,7 @@ data class CommentBean(
 )
 
 @Serializable
-data class CommentList(
+data class CommentListBean(
     val count: Int,
     val data: List<CommentBean>
 )

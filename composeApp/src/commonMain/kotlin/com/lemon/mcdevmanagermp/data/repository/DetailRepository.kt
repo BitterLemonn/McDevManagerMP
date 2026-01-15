@@ -27,7 +27,7 @@ class DetailRepository {
     }
 
     suspend fun getAllResource(platform: String): NetworkState<ResourceResponseBean> {
-        val cookie = AppContext.cookiesStore[AppContext.nowNickname]
+        val cookie = AppContext.cookiesStore[AppContext.userName]
         if (cookie != null) {
             CookiesStore.addCookie(NETEASE_USER_COOKIE, cookie)
             return handleRequest {
@@ -50,7 +50,7 @@ class DetailRepository {
         span: Int = Int.MAX_VALUE
     ): NetworkState<ResDetailResponseBean> {
         val itemListStr = itemList.joinToString(",")
-        val cookie = AppContext.cookiesStore[AppContext.nowNickname]
+        val cookie = AppContext.cookiesStore[AppContext.userName]
         if (cookie != null) {
             CookiesStore.addCookie(NETEASE_USER_COOKIE, cookie)
             return handleRequest {
@@ -83,7 +83,7 @@ class DetailRepository {
         start: Int = 0,
         span: Int = Int.MAX_VALUE
     ): NetworkState<NewResDetailResponseBean> {
-        val cookie = AppContext.cookiesStore[AppContext.nowNickname]
+        val cookie = AppContext.cookiesStore[AppContext.userName]
         if (cookie != null) {
             CookiesStore.addCookie(NETEASE_USER_COOKIE, cookie)
             return handleRequest {
@@ -115,7 +115,7 @@ class DetailRepository {
         start: Int = 0,
         span: Int = Int.MAX_VALUE
     ): NetworkState<ResMonthDetailResponseBean> {
-        val cookie = AppContext.cookiesStore[AppContext.nowNickname]
+        val cookie = AppContext.cookiesStore[AppContext.userName]
         if (cookie != null) {
             CookiesStore.addCookie(NETEASE_USER_COOKIE, cookie)
             return handleRequest {

@@ -135,14 +135,14 @@ object UnifiedExceptionHandler {
     ): NetworkState<T> {
         val returnCookies = CookiesStore.getCookie(NETEASE_USER_COOKIE)
         // 更新用户cookie
-        if (returnCookies != null && returnCookies != AppContext.cookiesStore[AppContext.nowNickname] && !noNeedRefreshCookies) {
-            AppContext.cookiesStore[AppContext.nowNickname] = returnCookies
-            AppConstant.database.userDao().getUserByNickname(AppContext.nowNickname)?.let {
+        if (returnCookies != null && returnCookies != AppContext.cookiesStore[AppContext.userName] && !noNeedRefreshCookies) {
+            AppContext.cookiesStore[AppContext.userName] = returnCookies
+            AppConstant.database.userDao().getUserByNickname(AppContext.userName)?.let {
                 val user = it.copy(cookies = returnCookies)
                 AppConstant.database.userDao().updateUser(user)
 //                Logger.d("用户${AppContext.nowNickname}的cookie已更新: $returnCookies")
             } ?: run {
-                Logger.e("用户${AppContext.nowNickname}不存在")
+                Logger.e("用户${AppContext.userName}不存在")
             }
         }
 

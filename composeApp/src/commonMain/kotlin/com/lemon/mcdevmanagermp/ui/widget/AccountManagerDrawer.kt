@@ -149,7 +149,7 @@ private fun AccountItem(
         .padding(vertical = 4.dp)
         .height(60.dp),
         minScrollPosition = 0.dp,
-        maxScrollPosition = if (account == AppContext.nowNickname) 0.dp else 80.dp,
+        maxScrollPosition = if (account == AppContext.userName) 0.dp else 80.dp,
         backgroundContent = {
             SwipeBackgroundContent(onDismiss = { onDismiss(account) })
         }) {
@@ -157,9 +157,9 @@ private fun AccountItem(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxHeight()
-                .background(if (account == AppContext.nowNickname) AppTheme.colors.info else AppTheme.colors.card)
+                .background(if (account == AppContext.userName) AppTheme.colors.info else AppTheme.colors.card)
                 .clickable(
-                    enabled = account != AppContext.nowNickname,
+                    enabled = account != AppContext.userName,
                     interactionSource = remember { MutableInteractionSource() },
                     indication = ripple()
                 ) { onClick(account) }
@@ -171,7 +171,7 @@ private fun AccountItem(
                     .padding(16.dp)
                     .align(Alignment.CenterStart),
                 letterSpacing = 2.sp,
-                color = if (account == AppContext.nowNickname) TextWhite else AppTheme.colors.textColor
+                color = if (account == AppContext.userName) TextWhite else AppTheme.colors.textColor
             )
         }
     }

@@ -119,7 +119,7 @@ fun MainPageCompact(
                     accountList = AppContext.accountList,
                     onClick = { viewModel.dispatch(MainViewAction.ChangeAccount(it)) },
                     onDismiss = { viewModel.dispatch(MainViewAction.DeleteAccount(it)) },
-                    onLogout = { viewModel.dispatch(MainViewAction.DeleteAccount(AppContext.nowNickname)) },
+                    onLogout = { viewModel.dispatch(MainViewAction.DeleteAccount(AppContext.userName)) },
                     onRightClick = { navController.navigate(Screen.LoginPage) })
             }) {
             Box(
@@ -234,6 +234,151 @@ fun MainPageCompact(
 @Composable
 fun MainPageMedium(
     navController: NavController,
+    showToast: (String, String) -> Unit = { _, _ -> },
+) {
+    // 控制展开/收起的状态
+    var isExpanded by remember { mutableStateOf(false) }
+    // 控制当前选中的菜单项
+    var selectedItem by remember { mutableStateOf(0) }
+
+    // 侧边栏宽度动画
+    val sidebarWidth by animateDpAsState(
+        targetValue = if (isExpanded) EXPANDED_WIDTH else COLLAPSED_WIDTH, animationSpec = spring(
+            dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessMediumLow
+        ), label = "SidebarWidthAnimation"
+    )
+    Box(modifier = Modifier.fillMaxSize()) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(AppTheme.colors.card)
+        ) {
+            // 侧边栏
+            NavigationRail(
+                modifier = Modifier
+                    .width(sidebarWidth)
+                    .fillMaxHeight(),
+                backgroundColor = AppTheme.colors.card,
+                elevation = 0.dp
+            )
+            {
+                Column(
+                    modifier = Modifier.padding(12.dp),
+                    horizontalAlignment = Alignment.Start
+                ) {
+                    // 顶部：切换按钮 (汉堡菜单)
+                    ExpandableNavigateItem(
+                        title = "MCDEV",
+                        titleWeight = FontWeight.ExtraBold,
+                        titleColor = AppTheme.colors.secondaryColor,
+                        icon = Res.drawable.ic_menu,
+                        expanded = isExpanded
+                    ) {
+                        isExpanded = !isExpanded
+                    }
+                    Divider(color = AppTheme.colors.dividerColor, thickness = 1.dp)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    ExpandableNavigateItem(
+                        title = "Dashboard",
+                        icon = Res.drawable.ic_dashboard,
+                        titleWeight = FontWeight.SemiBold,
+                        iconModifier = Modifier.clip(CircleShape),
+                        expanded = isExpanded,
+                        selected = selectedItem == 0
+                    ) {
+                        selectedItem = 0
+                    }
+                    ExpandableNavigateItem(
+                        title = "数据分析",
+                        icon = Res.drawable.ic_analyze,
+                        expanded = isExpanded,
+                        selected = selectedItem == 1
+                    ) {
+                        selectedItem = 1
+                    }
+                    ExpandableNavigateItem(
+                        title = "玩家反馈",
+                        icon = Res.drawable.ic_feedback,
+                        expanded = isExpanded,
+                        selected = selectedItem == 2
+                    ) {
+                        selectedItem = 2
+                    }
+                    ExpandableNavigateItem(
+                        title = "组件评论",
+                        icon = Res.drawable.ic_comment_line,
+                        expanded = isExpanded,
+                        selected = selectedItem == 3
+                    ) {
+                        selectedItem = 3
+                    }
+                    ExpandableNavigateItem(
+                        title = "收益管理",
+                        icon = Res.drawable.ic_profit,
+                        expanded = isExpanded,
+                        selected = selectedItem == 4
+                    ) {
+                        selectedItem = 4
+                    }
+                    Spacer(modifier = Modifier.weight(1f))
+                    ExpandableNavigateItem(
+                        title = AppContext.userName,
+                        icon = AppContext.avatarUrl,
+                        isTinted = false,
+                        iconModifier = Modifier.clip(CircleShape),
+                        expanded = isExpanded
+                    ) {}
+                    ExpandableNavigateItem(
+                        title = "设置",
+                        icon = Res.drawable.ic_setting,
+                        expanded = isExpanded,
+                        selected = selectedItem == 5
+                    ) {
+                        selectedItem = 5
+                    }
+                }
+            }
+            // 主内容区
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(bottomStart = 16.dp, topStart = 16.dp))
+                    .fillMaxHeight()
+                    .weight(1f)
+                    .padding(WindowInsets.systemBars.asPaddingValues())
+                    .background(AppTheme.colors.background)
+            ) {
+                this@Row.AnimatedVisibility(
+                    visible = selectedItem == 0,
+                    enter = fadeIn(animationSpec = tween(300)) +
+                            slideInHorizontally(animationSpec = tween(300)),
+                    exit = fadeOut(animationSpec = tween(300)) +
+                            slideOutHorizontally(animationSpec = tween(300))
+                ) {
+                    MainPageContent(
+                        navController = navController,
+                        showToast = showToast
+                    )
+                }
+                this@Row.AnimatedVisibility(
+                    visible = 3 == selectedItem,
+                    enter = fadeIn(animationSpec = tween(300)) +
+                            slideInHorizontally(animationSpec = tween(300)),
+                    exit = fadeOut(animationSpec = tween(300)) +
+                            slideOutHorizontally(animationSpec = tween(300))
+                ) {
+                    CommentPage(
+                        navController = navController,
+                        showToast = showToast
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun MainPageContent(
+    navController: NavController,
     viewModel: MainViewModel = viewModel { MainViewModel() },
     showToast: (String, String) -> Unit = { _, _ -> },
 ) {
@@ -242,20 +387,11 @@ fun MainPageMedium(
     }
 
     val viewStates by viewModel.viewStates.collectAsState()
-    // 控制展开/收起的状态
-    var isExpanded by remember { mutableStateOf(false) }
-    // 控制当前选中的菜单项
-    var selectedItem by remember { mutableStateOf(0) }
     var isShowLastMonthProfit by remember { mutableStateOf(false) }
 
-    // 侧边栏宽度动画
-    val sidebarWidth by animateDpAsState(
-        targetValue = if (isExpanded) EXPANDED_WIDTH else COLLAPSED_WIDTH, animationSpec = spring(
-            dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessMediumLow
-        ), label = "SidebarWidthAnimation"
-    )
     BasePage(
-        viewEffect = viewModel.viewEffects, onEffect = { effect ->
+        viewEffect = viewModel.viewEffects,
+        onEffect = { effect ->
             when (effect) {
                 is MainViewEffect.ShowToast -> showToast(effect.msg, SNACK_ERROR)
                 is MainViewEffect.RouteToPath -> navController.navigate(effect.path) {
@@ -269,193 +405,91 @@ fun MainPageMedium(
 
                 is MainViewEffect.ShowLastMonthProfit -> isShowLastMonthProfit = true
             }
-        }) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            Row(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(AppTheme.colors.card)
+        }
+    ) {
+        Box(
+            modifier = Modifier.fillMaxWidth().height(160.dp)
+                .background(AppTheme.colors.primaryColor)
+        )
+        Column(
+            modifier = Modifier.fillMaxSize().padding(16.dp)
+        ) {
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.CenterEnd
             ) {
-                // 侧边栏
-                NavigationRail(
-                    modifier = Modifier
-                        .width(sidebarWidth)
-                        .fillMaxHeight(),
-                    backgroundColor = AppTheme.colors.card,
-                    elevation = 0.dp
+                Text(
+                    modifier = Modifier.padding(end = 8.dp),
+                    text = "Hi, ${viewStates.username}!",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = MaterialTheme.typography.headlineMedium.fontSize,
+                    color = TextWhite
                 )
-                {
-                    Column(
-                        modifier = Modifier.padding(12.dp),
-                        horizontalAlignment = Alignment.Start
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+            ProfitSplitWidget(
+                curMonthProfit = viewStates.curMonthProfit,
+                curMonthDl = viewStates.curMonthDl,
+                lastMonthProfit = viewStates.lastMonthProfit,
+                lastMonthDl = viewStates.lastMonthDl,
+                yesterdayDl = viewStates.yesterdayDl,
+                yesterdayProfit = viewStates.yesterdayProfit,
+                halfAvgProfit = viewStates.halfAvgProfit,
+                halfAvgDl = viewStates.halfAvgDl,
+                isLoading = viewStates.isLoadingOverview
+            ) {
+                viewModel.dispatch(MainViewAction.LoadData(true))
+            }
+            Row(modifier = Modifier.fillMaxSize()) {
+                Column(modifier = Modifier.weight(1f)) {
+                    AnimatedVisibility(
+                        visible = true,
+                        enter = fadeIn(animationSpec = tween(300)) +
+                                slideInHorizontally(animationSpec = tween(300)),
+                        exit = fadeOut(animationSpec = tween(300)) +
+                                slideOutHorizontally(animationSpec = tween(300))
                     ) {
-                        // 顶部：切换按钮 (汉堡菜单)
-                        ExpandableNavigateItem(
-                            title = "MCDEV",
-                            titleWeight = FontWeight.ExtraBold,
-                            titleColor = AppTheme.colors.secondaryColor,
-                            icon = Res.drawable.ic_menu,
-                            expanded = isExpanded
-                        ) {
-                            isExpanded = !isExpanded
-                        }
-                        Divider(color = AppTheme.colors.dividerColor, thickness = 1.dp)
-                        Spacer(modifier = Modifier.height(16.dp))
-                        ExpandableNavigateItem(
-                            title = "Dashboard",
-                            icon = Res.drawable.ic_dashboard,
-                            titleWeight = FontWeight.SemiBold,
-                            iconModifier = Modifier.clip(CircleShape),
-                            expanded = isExpanded,
-                            selected = selectedItem == 0
-                        ) {
-                            selectedItem = 0
-                        }
-                        ExpandableNavigateItem(
-                            title = "数据分析",
-                            icon = Res.drawable.ic_analyze,
-                            expanded = isExpanded,
-                            selected = selectedItem == 1
-                        ) {
-                            selectedItem = 1
-                        }
-                        ExpandableNavigateItem(
-                            title = "玩家反馈",
-                            icon = Res.drawable.ic_feedback,
-                            expanded = isExpanded,
-                            selected = selectedItem == 2
-                        ) {
-                            selectedItem = 2
-                        }
-                        ExpandableNavigateItem(
-                            title = "组件评论",
-                            icon = Res.drawable.ic_comment_line,
-                            expanded = isExpanded,
-                            selected = selectedItem == 3
-                        ) {
-                            selectedItem = 3
-                        }
-                        ExpandableNavigateItem(
-                            title = "收益管理",
-                            icon = Res.drawable.ic_profit,
-                            expanded = isExpanded,
-                            selected = selectedItem == 4
-                        ) {
-                            selectedItem = 4
-                        }
-                        Spacer(modifier = Modifier.weight(1f))
-                        ExpandableNavigateItem(
-                            title = viewStates.username,
-                            icon = viewStates.avatarUrl,
-                            isTinted = false,
-                            iconModifier = Modifier.clip(CircleShape),
-                            expanded = isExpanded
-                        ) {}
-                        ExpandableNavigateItem(
-                            title = "设置",
-                            icon = Res.drawable.ic_setting,
-                            expanded = isExpanded,
-                            selected = selectedItem == 5
-                        ) {
-                            selectedItem = 5
-                        }
+                        ProfitCard(
+                            title = "本月收益速算",
+                            realMoney = viewStates.realMoney,
+                            taxMoney = viewStates.taxMoney,
+                            elevation = 2.dp,
+                            isLoading = viewStates.isLoadingProfit
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    AnimatedVisibility(
+                        visible = isShowLastMonthProfit,
+                        enter = fadeIn(animationSpec = tween(300)) + slideInHorizontally(
+                            animationSpec = tween(300)
+                        ),
+                        exit = fadeOut(animationSpec = tween(300)) + slideOutHorizontally(
+                            animationSpec = tween(300)
+                        )
+                    ) {
+                        ProfitCard(
+                            title = "上月收益速算",
+                            realMoney = viewStates.lastRealMoney,
+                            taxMoney = viewStates.lastTaxMoney,
+                            elevation = 2.dp,
+                            isLoading = viewStates.isLoadingProfit
+                        )
                     }
                 }
-                // 主内容区
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(bottomStart = 16.dp, topStart = 16.dp))
+                Column(
+                    modifier = Modifier.weight(1f)
                         .fillMaxHeight()
-                        .weight(1f)
-                        .padding(WindowInsets.systemBars.asPaddingValues())
-                        .background(AppTheme.colors.background)
+                        .padding(8.dp)
                 ) {
-                    Box(
-                        modifier = Modifier.fillMaxWidth().height(160.dp)
-                            .background(AppTheme.colors.primaryColor)
-                    )
-                    Column(
-                        modifier = Modifier.fillMaxSize().padding(16.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier.fillMaxWidth(),
-                            contentAlignment = Alignment.CenterEnd
-                        ) {
-                            Text(
-                                modifier = Modifier.padding(end = 8.dp),
-                                text = "Hi, ${viewStates.username}!",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = MaterialTheme.typography.headlineMedium.fontSize,
-                                color = TextWhite
+                    MultiLevelRankingCard(
+                        viewStates.rankListData
+                    ) { categoryType, subCategoryType ->
+                        viewModel.dispatch(
+                            MainViewAction.GetRankData(
+                                categoryType,
+                                subCategoryType
                             )
-                        }
-                        Spacer(modifier = Modifier.height(16.dp))
-                        ProfitSplitWidget(
-                            curMonthProfit = viewStates.curMonthProfit,
-                            curMonthDl = viewStates.curMonthDl,
-                            lastMonthProfit = viewStates.lastMonthProfit,
-                            lastMonthDl = viewStates.lastMonthDl,
-                            yesterdayDl = viewStates.yesterdayDl,
-                            yesterdayProfit = viewStates.yesterdayProfit,
-                            halfAvgProfit = viewStates.halfAvgProfit,
-                            halfAvgDl = viewStates.halfAvgDl,
-                            isLoading = viewStates.isLoadingOverview
-                        ) {
-                            viewModel.dispatch(MainViewAction.LoadData(true))
-                        }
-                        Row(modifier = Modifier.fillMaxSize()) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                AnimatedVisibility(
-                                    visible = true,
-                                    enter = fadeIn(animationSpec = tween(300)) +
-                                            slideInHorizontally(animationSpec = tween(300)),
-                                    exit = fadeOut(animationSpec = tween(300)) +
-                                            slideOutHorizontally(animationSpec = tween(300))
-                                ) {
-                                    ProfitCard(
-                                        title = "本月收益速算",
-                                        realMoney = viewStates.realMoney,
-                                        taxMoney = viewStates.taxMoney,
-                                        elevation = 2.dp,
-                                        isLoading = viewStates.isLoadingProfit
-                                    )
-                                }
-                                Spacer(modifier = Modifier.height(8.dp))
-                                AnimatedVisibility(
-                                    visible = isShowLastMonthProfit,
-                                    enter = fadeIn(animationSpec = tween(300)) + slideInHorizontally(
-                                        animationSpec = tween(300)
-                                    ),
-                                    exit = fadeOut(animationSpec = tween(300)) + slideOutHorizontally(
-                                        animationSpec = tween(300)
-                                    )
-                                ) {
-                                    ProfitCard(
-                                        title = "上月收益速算",
-                                        realMoney = viewStates.lastRealMoney,
-                                        taxMoney = viewStates.lastTaxMoney,
-                                        elevation = 2.dp,
-                                        isLoading = viewStates.isLoadingProfit
-                                    )
-                                }
-                            }
-                            Column(
-                                modifier = Modifier.weight(1f)
-                                    .fillMaxHeight()
-                                    .padding(8.dp)
-                            ) {
-                                MultiLevelRankingCard(
-                                    viewStates.rankListData
-                                ) { categoryType, subCategoryType ->
-                                    viewModel.dispatch(
-                                        MainViewAction.GetRankData(
-                                            categoryType,
-                                            subCategoryType
-                                        )
-                                    )
-                                }
-                            }
-                        }
+                        )
                     }
                 }
             }

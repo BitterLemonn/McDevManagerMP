@@ -48,7 +48,7 @@ fun ExpandableNavigateItem(
     title: String,
     titleColor: Color = AppTheme.colors.textColor,
     titleWeight: FontWeight = FontWeight.Normal,
-    icon: Any,
+    icon: Any?,
     iconModifier: Modifier = Modifier,
     isTinted: Boolean = true,
     expanded: Boolean = false,

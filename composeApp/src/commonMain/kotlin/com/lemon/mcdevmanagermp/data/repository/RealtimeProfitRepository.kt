@@ -24,7 +24,7 @@ class RealtimeProfitRepository {
         iid: String,
         date: String
     ): NetworkState<OneResRealtimeIncomeBean> {
-        val cookie = AppContext.cookiesStore[AppContext.nowNickname]
+        val cookie = AppContext.cookiesStore[AppContext.userName]
         if (cookie != null) {
             CookiesStore.addCookie(NETEASE_USER_COOKIE, cookie)
 
@@ -49,7 +49,7 @@ class RealtimeProfitRepository {
         year: Int,
         month: Int
     ): NetworkState<OneResRealtimeIncomeBean> {
-        val cookie = AppContext.cookiesStore[AppContext.nowNickname]
+        val cookie = AppContext.cookiesStore[AppContext.userName]
         if (cookie != null) {
             CookiesStore.addCookie(NETEASE_USER_COOKIE, cookie)
 

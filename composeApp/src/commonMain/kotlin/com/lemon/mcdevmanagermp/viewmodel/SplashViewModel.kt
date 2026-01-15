@@ -37,7 +37,8 @@ class SplashViewModel : ViewModel() {
                     if (userInfoList.isNotEmpty()) {
                         for (user in userInfoList) {
                             if (userInfoList.indexOf(user) == 0) {
-                                AppContext.nowNickname = user.nickname
+                                AppContext.userName = user.nickname
+                                AppContext.avatarUrl = user.avatarUrl
                                 CookiesStore.addCookie(NETEASE_USER_COOKIE, user.cookies)
                             }
                             AppContext.cookiesStore[user.nickname] = user.cookies

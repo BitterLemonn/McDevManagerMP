@@ -112,7 +112,7 @@ class MainViewModel : ViewModel() {
                     sendEffect(
                         _viewEffects, MainViewEffect.ShowToast("无法获取用户信息, 请重新登录")
                     )
-                    logout(AppContext.nowNickname)
+                    logout(AppContext.userName)
                 }
             }
 
@@ -121,7 +121,7 @@ class MainViewModel : ViewModel() {
                     is UnifiedExceptionHandler.CookiesExpiredException -> {
                         sendEffect(_viewEffects, MainViewEffect.RouteToPath(Screen.LoginPage, true))
                         sendEffect(_viewEffects, MainViewEffect.ShowToast("登录过期, 请重新登录"))
-                        logout(AppContext.nowNickname)
+                        logout(AppContext.userName)
                     }
 
                     else -> {
@@ -169,7 +169,7 @@ class MainViewModel : ViewModel() {
                     is UnifiedExceptionHandler.CookiesExpiredException -> {
                         sendEffect(_viewEffects, MainViewEffect.RouteToPath(Screen.LoginPage, true))
                         sendEffect(_viewEffects, MainViewEffect.ShowToast("登录过期, 请重新登录"))
-                        logout(AppContext.nowNickname)
+                        logout(AppContext.userName)
                     }
 
                     else -> {
@@ -182,7 +182,7 @@ class MainViewModel : ViewModel() {
 
     private suspend fun getOverviewLogic(forceReload: Boolean) {
         val overviewEntity = withContext(Dispatchers.IO) {
-            AppConstant.database.infoDao().getLatestOverviewByNickname(AppContext.nowNickname)
+            AppConstant.database.infoDao().getLatestOverviewByNickname(AppContext.userName)
         }
 
         if (overviewEntity != null) {
@@ -243,7 +243,7 @@ class MainViewModel : ViewModel() {
                     // 保存概览信息到数据库
                     withContext(Dispatchers.IO) {
                         val overviewEntity = OverviewEntity(
-                            nickname = AppContext.nowNickname,
+                            nickname = AppContext.userName,
                             days14AverageDownload = it.days14AverageDownload,
                             days14AverageDiamond = it.days14AverageDiamond,
                             days14TotalDownload = it.days14TotalDownload,
@@ -275,7 +275,7 @@ class MainViewModel : ViewModel() {
                     is UnifiedExceptionHandler.CookiesExpiredException -> {
                         sendEffect(_viewEffects, MainViewEffect.RouteToPath(Screen.LoginPage, true))
                         sendEffect(_viewEffects, MainViewEffect.ShowToast("登录过期, 请重新登录"))
-                        logout(AppContext.nowNickname)
+                        logout(AppContext.userName)
                     }
 
                     else -> {
@@ -306,7 +306,7 @@ class MainViewModel : ViewModel() {
     }
 
     private fun deleteAccount(accountName: String) {
-        val isLogout = accountName == AppContext.nowNickname
+        val isLogout = accountName == AppContext.userName
         viewModelScope.launch {
             logout(accountName)
             if (isLogout) sendEffect(
@@ -319,7 +319,7 @@ class MainViewModel : ViewModel() {
     private fun changeAccount(accountName: String) {
         viewModelScope.launch {
             delay(100)
-            AppContext.nowNickname = accountName
+            AppContext.userName = accountName
             loadData(true)
         }
     }
@@ -357,7 +357,7 @@ class MainViewModel : ViewModel() {
 
             withContext(Dispatchers.IO) {
                 val dataBase = AppConstant.database.infoDao()
-                val latestOverview = dataBase.getLatestOverviewByNickname(AppContext.nowNickname)
+                val latestOverview = dataBase.getLatestOverviewByNickname(AppContext.userName)
                 if (latestOverview != null) {
                     val updatedOverview = latestOverview.copy(
                         thisMonthProfit = realMoneyStr,
