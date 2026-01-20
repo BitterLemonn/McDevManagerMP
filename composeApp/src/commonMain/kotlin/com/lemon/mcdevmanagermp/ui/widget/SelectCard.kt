@@ -7,7 +7,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -29,6 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.lemon.mcdevmanagermp.ui.theme.AppTheme
 import com.lemon.mcdevmanagermp.ui.theme.TextWhite
@@ -36,7 +36,6 @@ import mcdevmanagermp.composeapp.generated.resources.Res
 import mcdevmanagermp.composeapp.generated.resources.ic_bar_chart
 import mcdevmanagermp.composeapp.generated.resources.ic_line_chart
 import org.jetbrains.compose.resources.painterResource
-import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 fun SelectTextCard(

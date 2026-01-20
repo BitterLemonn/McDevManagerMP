@@ -1,5 +1,6 @@
 package com.lemon.mcdevmanagermp.ui.page
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
@@ -10,6 +11,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -46,6 +48,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
@@ -78,7 +81,6 @@ import mcdevmanagermp.composeapp.generated.resources.ic_menu
 import mcdevmanagermp.composeapp.generated.resources.ic_notice
 import mcdevmanagermp.composeapp.generated.resources.ic_profit
 import mcdevmanagermp.composeapp.generated.resources.ic_setting
-import org.jetbrains.compose.ui.tooling.preview.Preview
 
 
 // 定义常量
@@ -347,29 +349,27 @@ fun MainPageMedium(
                     .padding(WindowInsets.systemBars.asPaddingValues())
                     .background(AppTheme.colors.background)
             ) {
-                this@Row.AnimatedVisibility(
-                    visible = selectedItem == 0,
-                    enter = fadeIn(animationSpec = tween(300)) +
-                            slideInHorizontally(animationSpec = tween(300)),
-                    exit = fadeOut(animationSpec = tween(300)) +
-                            slideOutHorizontally(animationSpec = tween(300))
-                ) {
-                    MainPageContent(
-                        navController = navController,
-                        showToast = showToast
-                    )
-                }
-                this@Row.AnimatedVisibility(
-                    visible = 3 == selectedItem,
-                    enter = fadeIn(animationSpec = tween(300)) +
-                            slideInHorizontally(animationSpec = tween(300)),
-                    exit = fadeOut(animationSpec = tween(300)) +
-                            slideOutHorizontally(animationSpec = tween(300))
-                ) {
-                    CommentPage(
-                        navController = navController,
-                        showToast = showToast
-                    )
+                AnimatedContent(
+                    targetState = selectedItem,
+                    transitionSpec = {
+                        // 根据导航方向自定义动画
+                        val direction = if (targetState > initialState) 1 else -1
+                        (fadeIn(animationSpec = tween(300)) + slideInHorizontally(
+                            animationSpec = tween(
+                                300
+                            )
+                        ) { direction * it }).togetherWith(
+                            fadeOut(animationSpec = tween(300)) +
+                                    slideOutHorizontally(animationSpec = tween(300)) { -direction * it }
+                        )
+                    },
+                    label = "NavigationAnimation"
+                ) { targetItem ->
+                    when (targetItem) {
+                        0 -> MainPageContent(navController = navController, showToast = showToast)
+                        3 -> CommentPage(navController = navController, showToast = showToast)
+                        else -> Box(Modifier.fillMaxSize()) // 占位
+                    }
                 }
             }
         }

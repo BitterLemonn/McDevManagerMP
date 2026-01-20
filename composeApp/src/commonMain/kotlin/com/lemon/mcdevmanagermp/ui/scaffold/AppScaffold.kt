@@ -52,8 +52,6 @@ fun AppScaffold() {
     }
 
 
-
-
     MCDevManagerTheme {
         Scaffold(
             modifier = Modifier.fillMaxSize(), snackbarHost = {

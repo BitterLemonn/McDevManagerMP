@@ -54,6 +54,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.lemon.mcdevmanagermp.data.page.RankCategoryContent
@@ -72,7 +73,6 @@ import mcdevmanagermp.composeapp.generated.resources.ic_refresh
 import mcdevmanagermp.composeapp.generated.resources.normal_image
 import mcdevmanagermp.composeapp.generated.resources.up_image
 import org.jetbrains.compose.resources.painterResource
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import kotlin.math.abs
 
 // 模拟数据源

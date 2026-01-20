@@ -3,14 +3,23 @@ package com.lemon.mcdevmanagermp.utils
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.minus
 import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Clock
 import kotlin.time.Instant
 
-// 假设 publishTime 是秒 (Long 类型)
-fun formatTime(publishTime: Long): String {
+private fun formatMonth(month: Int): String {
+    return if (month < 10) {
+        "0$month"
+    } else {
+        "$month"
+    }
+}
+
+fun formatTime(second: Long): String {
     // 1. 将秒转换为 Instant (时间戳)
-    val instant = Instant.fromEpochSeconds(publishTime)
+    val instant = Instant.fromEpochSeconds(second)
 
     // 2. 转换为当前系统的时区 (或者指定 TimeZone.of("Asia/Shanghai"))
     val localDate = instant.toLocalDateTime(TimeZone.currentSystemDefault()).date
@@ -18,6 +27,24 @@ fun formatTime(publishTime: Long): String {
     // 3. 格式化
     // 方式 A: 直接使用 ISO 标准格式 (结果就是 yyyy-MM-dd)
     return localDate.toString()
+}
+
+fun formatDateShort(millis: Long): String {
+    val instant = Instant.fromEpochMilliseconds(millis)
+    val localDate = instant.toLocalDateTime(TimeZone.currentSystemDefault()).date
+    return "${formatMonth(localDate.month.ordinal + 1)}/${localDate.day}"
+}
+
+fun formatDateFull(millis: Long): String {
+    val instant = Instant.fromEpochMilliseconds(millis)
+    val localDate = instant.toLocalDateTime(TimeZone.currentSystemDefault()).date
+    return "${localDate.year}年${formatMonth(localDate.month.ordinal + 1)}月${localDate.day}日"
+}
+
+fun getTodayStartMillis(): Long {
+    val now = Clock.System.now()
+    val today = now.toLocalDateTime(TimeZone.currentSystemDefault()).date
+    return today.atStartOfDayIn(TimeZone.currentSystemDefault()).toEpochMilliseconds()
 }
 
 fun getPreviousDay(dateStr: String): String {

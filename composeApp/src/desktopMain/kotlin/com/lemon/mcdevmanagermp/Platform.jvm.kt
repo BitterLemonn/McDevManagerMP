@@ -3,7 +3,7 @@ package com.lemon.mcdevmanagermp
 import java.io.File
 
 class JVMPlatform: Platform {
-    override val name: String = "Java ${System.getProperty("java.version")}"
+    override val name: String = "Java ${System.getProperty("java.version")}-desktop"
 }
 
 actual fun getPlatform(): Platform = JVMPlatform()

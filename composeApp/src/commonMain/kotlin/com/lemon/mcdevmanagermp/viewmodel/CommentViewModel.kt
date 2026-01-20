@@ -40,6 +40,71 @@ class CommentViewModel : ViewModel() {
     fun dispatch(action: CommentViewActions) {
         when (action) {
             is CommentViewActions.LoadComments -> loadComment()
+            is CommentViewActions.UpdateFilterRes -> {
+                _viewStates.setState {
+                    copy(
+                        filterRes = action.res,
+                        nowPage = 0,
+                        isLoadOver = false,
+                        commentList = emptyList()
+                    )
+                }
+                loadComment(true)
+            }
+
+            is CommentViewActions.UpdateFilterStars -> {
+                val newStars = _viewStates.value.filterStars.toMutableList()
+                action.stars?.let {
+                    if (action.isAdd) {
+                        if (!newStars.contains(it)) newStars.add(it)
+                    } else {
+                        newStars.remove(it)
+                    }
+                }
+                _viewStates.setState {
+                    copy(
+                        filterStars = newStars,
+                        nowPage = 0,
+                        isLoadOver = false,
+                        commentList = emptyList()
+                    )
+                }
+                loadComment(true)
+            }
+
+            is CommentViewActions.UpdateFilterTag -> {
+                val newTags = _viewStates.value.filterTags.toMutableList()
+                action.tag?.let {
+                    if (action.isAdd) {
+                        if (!newTags.contains(it)) newTags.add(it)
+                    } else {
+                        newTags.remove(it)
+                    }
+                }
+                _viewStates.setState {
+                    copy(
+                        filterTags = newTags,
+                        nowPage = 0,
+                        isLoadOver = false,
+                        commentList = emptyList()
+                    )
+                }
+                loadComment(true)
+            }
+
+            is CommentViewActions.RemoveAllFilter -> {
+                _viewStates.setState {
+                    copy(
+                        filterRes = null,
+                        filterTags = emptyList(),
+                        filterStars = emptyList(),
+                        nowPage = 0,
+                        isLoadOver = false,
+                        commentList = emptyList()
+                    )
+                }
+                loadComment(true)
+            }
         }
     }
 
@@ -79,9 +144,8 @@ class CommentViewModel : ViewModel() {
         _viewStates.value.let {
             when (val result = repository.getCommentList(
                 page = if (isRefresh) 0 else it.nowPage,
-//                key = it.key,
-//                tag = if (it.tag.isEmpty()) null else it.tag.joinToString("__"),
-//                state = it.state,
+                key = it.filterRes,
+                tag = if (it.filterTags.isEmpty()) null else it.filterTags.joinToString("__"),
 //                startDate = it.startDate,
 //                endDate = it.endDate
             )) {
@@ -123,7 +187,10 @@ data class CommentViewStates(
     val commentList: List<CommentBean> = emptyList(),
     val isLoadOver: Boolean = false,
     val nowPage: Int = 0,
-    val commentCount: Int = 0
+    val commentCount: Int = 0,
+    val filterRes: String? = null,
+    val filterTags: List<String> = emptyList(),
+    val filterStars: List<Int> = emptyList(),
 ) : IUiState
 
 sealed class CommentViewEffects : IUiEffect {
@@ -135,4 +202,8 @@ sealed class CommentViewEffects : IUiEffect {
 
 sealed class CommentViewActions : IUiAction {
     data object LoadComments : CommentViewActions()
+    data class UpdateFilterRes(val res: String?) : CommentViewActions()
+    data class UpdateFilterStars(val stars: Int?, val isAdd: Boolean) : CommentViewActions()
+    data class UpdateFilterTag(val tag: String?, val isAdd: Boolean) : CommentViewActions()
+    data object RemoveAllFilter : CommentViewActions()
 }

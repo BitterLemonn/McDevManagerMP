@@ -32,13 +32,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lemon.mcdevmanagermp.ui.theme.AppTheme
 import com.lemon.mcdevmanagermp.ui.theme.TextBlack
 import com.lemon.mcdevmanagermp.ui.theme.TextWhite
-import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 fun BottomNameInput(

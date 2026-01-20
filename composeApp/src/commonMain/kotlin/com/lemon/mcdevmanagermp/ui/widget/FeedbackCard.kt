@@ -32,7 +32,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -44,10 +43,10 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil3.ImageLoader
 import com.lemon.mcdevmanagermp.data.common.JSONConverter
 import com.lemon.mcdevmanagermp.data.netease.feedback.ConflictModsBean
 import com.lemon.mcdevmanagermp.ui.theme.AppTheme
@@ -61,7 +60,6 @@ import mcdevmanagermp.composeapp.generated.resources.ic_mod
 import mcdevmanagermp.composeapp.generated.resources.ic_no_reply
 import mcdevmanagermp.composeapp.generated.resources.ic_replied
 import org.jetbrains.compose.resources.painterResource
-import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable

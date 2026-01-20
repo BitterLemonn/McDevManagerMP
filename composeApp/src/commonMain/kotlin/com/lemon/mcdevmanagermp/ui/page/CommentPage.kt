@@ -1,28 +1,35 @@
 package com.lemon.mcdevmanagermp.ui.page
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.updateTransition
 import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkHorizontally
-import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -32,11 +39,11 @@ import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -44,27 +51,36 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.InputChip
+import androidx.compose.material3.InputChipDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
@@ -74,18 +90,26 @@ import com.lemon.mcdevmanagermp.data.netease.comment.CommentBean
 import com.lemon.mcdevmanagermp.ui.theme.AppTheme
 import com.lemon.mcdevmanagermp.ui.widget.LoginOutlineTextField
 import com.lemon.mcdevmanagermp.ui.widget.SNACK_ERROR
+import com.lemon.mcdevmanagermp.ui.widget.wide.DateRangeFilterChip
+import com.lemon.mcdevmanagermp.ui.widget.wide.MultiSelectDropdownChip
+import com.lemon.mcdevmanagermp.ui.widget.wide.SingleSelectDropdownChip
+import com.lemon.mcdevmanagermp.utils.formatDateShort
 import com.lemon.mcdevmanagermp.utils.formatTime
 import com.lemon.mcdevmanagermp.viewmodel.CommentViewActions
 import com.lemon.mcdevmanagermp.viewmodel.CommentViewEffects
 import com.lemon.mcdevmanagermp.viewmodel.CommentViewModel
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 import mcdevmanagermp.composeapp.generated.resources.Res
 import mcdevmanagermp.composeapp.generated.resources.ic_back
+import mcdevmanagermp.composeapp.generated.resources.ic_close
 import mcdevmanagermp.composeapp.generated.resources.ic_comment
+import mcdevmanagermp.composeapp.generated.resources.ic_filter
 import mcdevmanagermp.composeapp.generated.resources.ic_mod
+import mcdevmanagermp.composeapp.generated.resources.ic_star
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import kotlin.time.Clock
 
 @Composable
@@ -123,101 +147,186 @@ fun CommentPage(
             comments = viewStates.commentList,
             onReplySubmit = { commentId, replyText ->
 
+            },
+            onNeedLoadMore = {
+                if (!viewStates.isLoadOver) viewModel.dispatch(CommentViewActions.LoadComments)
             }
         )
+    }
+}
+
+@Composable
+private fun LazyStaggeredGridState.OnBottomReached(
+    buffer: Int = 5,
+    onLoadMore: () -> Unit
+) {
+    val shouldLoadMore = remember {
+        derivedStateOf {
+            val lastVisibleItem = layoutInfo.visibleItemsInfo.lastOrNull()
+                ?: return@derivedStateOf false
+
+            lastVisibleItem.index >= layoutInfo.totalItemsCount - 1 - buffer
+        }
+    }
+
+    LaunchedEffect(shouldLoadMore) {
+        snapshotFlow { shouldLoadMore.value }
+            .distinctUntilChanged()
+            .filter { it }
+            .collect { onLoadMore() }
     }
 }
 
 // --- 主屏幕 ---
 @Composable
 private fun CommentPageContain(
-    comments: List<CommentBean>, onReplySubmit: (String, String) -> Unit
+    comments: List<CommentBean>,
+    onReplySubmit: (String, String) -> Unit,
+    onNeedLoadMore: () -> Unit = { },
+    onFilterChange: (CommentFilter) -> Unit = { }  // 新增回调
 ) {
     var selectedCommentId by remember { mutableStateOf<String?>(null) }
+    var currentFilter by remember { mutableStateOf(CommentFilter()) }
+
     val listState = rememberLazyStaggeredGridState()
+    listState.OnBottomReached { onNeedLoadMore() }
     val coroutineScope = rememberCoroutineScope()
+
+    var activeComment by remember { mutableStateOf<CommentBean?>(null) }
 
     val selectedComment = remember(selectedCommentId, comments) {
         comments.find { it.id == selectedCommentId }
     }
 
-    var activeComment by remember { mutableStateOf<CommentBean?>(null) }
-    if (selectedComment != null) {
-        activeComment = selectedComment
-    }
-
-    // 当列数变化时（选中/取消选中），保持选中项可见
-    val columns = if (selectedCommentId != null) 1 else 2
-    LaunchedEffect(columns, selectedCommentId) {
-        if (selectedCommentId != null) {
-            val index = comments.indexOfFirst { it.id == selectedCommentId }
-            if (index >= 0) {
-                // 短暂延迟等待布局变化完成
-                kotlinx.coroutines.delay(100)
-                listState.animateScrollToItem(index)
-            }
+    LaunchedEffect(selectedComment) {
+        if (selectedComment != null) {
+            activeComment = selectedComment
         }
     }
 
-    // 动画权重
-    val animationProgress by animateFloatAsState(
-        targetValue = if (selectedCommentId != null) 1f else 0f,
-        animationSpec = spring(stiffness = Spring.StiffnessLow),
-        label = "weight"
-    )
-    val listWeight = 1f - (0.6f * animationProgress)
-    val detailWeight = 0.6f * animationProgress
+    val isExpanded = selectedCommentId != null
 
-    Scaffold(
-        containerColor = AppTheme.colors.background,
-    ) { padding ->
-        Row(
-            modifier = Modifier.fillMaxSize()
+    val transition = updateTransition(targetState = isExpanded, label = "panel")
+
+    val listWidthFraction by transition.animateFloat(
+        transitionSpec = { spring(stiffness = Spring.StiffnessLow) },
+        label = "listWidth"
+    ) { if (it) 0.4f else 1f }
+
+    val detailOffsetX by transition.animateFloat(
+        transitionSpec = { spring(stiffness = Spring.StiffnessLow) },
+        label = "offset"
+    ) { if (it) 0f else 1f }
+
+    val detailAlpha by transition.animateFloat(
+        transitionSpec = { tween(250) },
+        label = "alpha"
+    ) { if (it) 1f else 0f }
+
+    val showPanel = transition.currentState || transition.targetState
+
+    LaunchedEffect(transition.currentState, transition.targetState) {
+        if (!transition.currentState && !transition.targetState) {
+            activeComment = null
+        }
+    }
+
+    var isPanelPreloaded by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        kotlinx.coroutines.delay(500)
+        isPanelPreloaded = true
+    }
+
+    Scaffold(containerColor = AppTheme.colors.background) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
                 .padding(padding)
-                .padding(vertical = 16.dp)
         ) {
-            Box(
-                modifier = Modifier.weight(listWeight)
-            ) {
-                CommentListArea(
-                    comments = comments,
-                    selectedId = selectedCommentId,
-                    listState = listState,
-                    onSelect = { commentId ->
-                        val previousSelected = selectedCommentId
-                        selectedCommentId = commentId
+            // 筛选栏
+            CommentFilterBar(
+                comments = comments,
+                currentFilter = currentFilter,
+                onFilterChange = { filter ->
+                    currentFilter = filter
+                    onFilterChange(filter)  // 回调给外部
+                },
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            )
 
-                        // 如果之前没有选中项（从双列变单列），滚动会在 LaunchedEffect 中处理
-                        // 如果已经是单列模式，立即滚动
-                        if (previousSelected != null) {
-                            val index = comments.indexOfFirst { it.id == commentId }
-                            if (index >= 0) {
+            // 原有内容
+            BoxWithConstraints(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(vertical = 8.dp)
+            ) {
+                val containerWidth = maxWidth
+                val detailWidth = containerWidth * 0.6f
+
+                // 预渲染隐藏的面板
+                if (isPanelPreloaded && activeComment == null && comments.isNotEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .width(detailWidth)
+                            .fillMaxHeight()
+                            .offset(x = containerWidth)
+                            .alpha(0f)
+                    ) {
+                        CommentDetailPanel(
+                            comment = comments.first(),
+                            onClose = {},
+                            onReplySubmit = {}
+                        )
+                    }
+                }
+
+                // 列表
+                Box(
+                    modifier = Modifier
+                        .width(containerWidth * listWidthFraction)
+                        .fillMaxHeight()
+                ) {
+                    CommentListArea(
+                        comments = comments,
+                        selectedId = selectedCommentId,
+                        listState = listState,
+                        onSelect = { commentId ->
+                            val prev = selectedCommentId
+                            selectedCommentId = commentId
+                            if (prev != null) {
                                 coroutineScope.launch {
-                                    listState.animateScrollToItem(index)
+                                    val idx = comments.indexOfFirst { it.id == commentId }
+                                    if (idx >= 0) listState.animateScrollToItem(idx)
                                 }
                             }
                         }
-                    })
-            }
+                    )
+                }
 
-            if (detailWeight > 0.001f && activeComment != null) {
+                // 详情面板
                 Box(
-                    modifier = Modifier.weight(detailWeight)
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .width(detailWidth)
+                        .fillMaxHeight()
+                        .graphicsLayer {
+                            translationX = detailWidth.toPx() * detailOffsetX
+                            alpha = detailAlpha
+                        }
                         .clip(RoundedCornerShape(topStart = 16.dp, bottomStart = 16.dp))
                         .border(
                             BorderStroke(1.dp, AppTheme.colors.hintColor.copy(0.2f)),
                             shape = RoundedCornerShape(topStart = 16.dp, bottomStart = 16.dp)
                         )
                 ) {
-                    DetailPanelAnimationWrapper(
-                        visible = selectedCommentId != null
-                    ) {
-                        CommentDetailPanel(
-                            comment = activeComment!!,
-                            onClose = { selectedCommentId = null },
-                            onReplySubmit = { text ->
-                                onReplySubmit(activeComment!!.id, text)
-                            })
+                    if (showPanel && activeComment != null) {
+                        key(activeComment!!.id) {
+                            CommentDetailPanel(
+                                comment = activeComment!!,
+                                onClose = { selectedCommentId = null },
+                                onReplySubmit = { text -> onReplySubmit(activeComment!!.id, text) }
+                            )
+                        }
                     }
                 }
             }
@@ -244,17 +353,18 @@ private fun CommentListArea(
         contentPadding = PaddingValues(bottom = 24.dp),
         modifier = Modifier.fillMaxSize()
     ) {
-        items(
-            items = comments, key = { it.id }) { comment ->
+        items(items = comments, key = { it.id }) { comment ->
             Box(
-                modifier = Modifier.clip(RoundedCornerShape(16.dp))
+                modifier = Modifier
                     .padding(horizontal = 16.dp)
+                    .clip(RoundedCornerShape(16.dp))
             ) {
                 CommentSummaryCard(
                     comment = comment,
                     isSelected = comment.id == selectedId,
                     isCompact = selectedId != null,
-                    onClick = { onSelect(comment.id) })
+                    onClick = { onSelect(comment.id) }
+                )
             }
         }
     }
@@ -467,6 +577,315 @@ private fun ReplyInputBar(
     }
 }
 
+
+/**
+ * 筛选条件
+ */
+data class CommentFilter(
+    val commentTags: Set<String> = emptySet(),
+    val resName: String? = null,  // 单选
+    val stars: Set<String> = emptySet(),
+    val startTime: Long? = null,  // 开始时间戳（毫秒）
+    val endTime: Long? = null     // 结束时间戳（毫秒）
+) {
+    fun isActive(): Boolean =
+        commentTags.isNotEmpty() ||
+                resName != null ||
+                stars.isNotEmpty() ||
+                startTime != null ||
+                endTime != null
+
+    fun totalSelectedCount(): Int {
+        var count = commentTags.size + stars.size
+        if (resName != null) count++
+        if (startTime != null) count++
+        if (endTime != null) count++
+        return count
+    }
+
+    fun hasTimeFilter(): Boolean = startTime != null || endTime != null
+}
+
+// --- 筛选栏组件 ---
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CommentFilterBar(
+    comments: List<CommentBean>,
+    currentFilter: CommentFilter,
+    onFilterChange: (CommentFilter) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    // 从评论列表提取可选项
+    val availableCommentTags = remember(comments) {
+        comments.map { it.commentTag }.filter { it.isNotBlank() }.distinct().sorted()
+    }
+    val availableResNames = remember(comments) {
+        comments.map { it.resName }.filter { it.isNotBlank() }.distinct().sorted()
+    }
+    val availableStars = remember(comments) {
+        comments.map { it.stars }.filter { it.isNotBlank() }.distinct().sortedDescending()
+    }
+
+    Column(modifier = modifier) {
+        // 主筛选栏
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            color = AppTheme.colors.card,
+            shape = RoundedCornerShape(12.dp),
+            tonalElevation = 1.dp
+        ) {
+            Row(
+                modifier = Modifier
+                    .horizontalScroll(rememberScrollState())
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // 筛选图标
+                Icon(
+                    painter = painterResource(Res.drawable.ic_filter),
+                    contentDescription = "筛选",
+                    modifier = Modifier.size(20.dp),
+                    tint = if (currentFilter.isActive()) AppTheme.colors.primaryColor
+                    else AppTheme.colors.hintColor
+                )
+
+                Text(
+                    text = "筛选",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Medium,
+                    color = AppTheme.colors.textColor
+                )
+
+                VerticalDivider(
+                    modifier = Modifier.height(24.dp),
+                    color = AppTheme.colors.hintColor.copy(alpha = 0.3f)
+                )
+
+                // 评论类型多选
+                MultiSelectDropdownChip(
+                    label = "评论类型",
+                    icon = Res.drawable.ic_comment,
+                    options = availableCommentTags,
+                    selectedOptions = currentFilter.commentTags,
+                    onSelectionChanged = { newSelection ->
+                        onFilterChange(currentFilter.copy(commentTags = newSelection))
+                    }
+                )
+
+                // 资源单选
+                SingleSelectDropdownChip(
+                    label = "资源",
+                    icon = Res.drawable.ic_mod,
+                    options = availableResNames,
+                    selectedOption = currentFilter.resName,
+                    onSelectionChanged = { newSelection ->
+                        onFilterChange(currentFilter.copy(resName = newSelection))
+                    }
+                )
+
+                // 评分多选
+                MultiSelectDropdownChip(
+                    label = "评分",
+                    icon = Res.drawable.ic_star,
+                    options = availableStars,
+                    selectedOptions = currentFilter.stars,
+                    onSelectionChanged = { newSelection ->
+                        onFilterChange(currentFilter.copy(stars = newSelection))
+                    },
+                    optionDisplayText = { it }
+                )
+
+                VerticalDivider(
+                    modifier = Modifier.height(24.dp),
+                    color = AppTheme.colors.hintColor.copy(alpha = 0.3f)
+                )
+
+                // 时间范围筛选
+                DateRangeFilterChip(
+                    startTime = currentFilter.startTime,
+                    endTime = currentFilter.endTime,
+                    onTimeRangeChanged = { start, end ->
+                        onFilterChange(currentFilter.copy(startTime = start, endTime = end))
+                    }
+                )
+
+                // 清除按钮
+                AnimatedVisibility(
+                    visible = currentFilter.isActive(),
+                    enter = fadeIn() + expandHorizontally(),
+                    exit = fadeOut() + shrinkHorizontally()
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        VerticalDivider(
+                            modifier = Modifier.height(24.dp),
+                            color = AppTheme.colors.hintColor.copy(alpha = 0.3f)
+                        )
+                        AssistChip(
+                            onClick = { onFilterChange(CommentFilter()) },
+                            label = { Text("清除全部") },
+                            leadingIcon = {
+                                Icon(
+                                    painter = painterResource(Res.drawable.ic_close),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            },
+                            colors = AssistChipDefaults.assistChipColors(
+                                containerColor = AppTheme.colors.card,
+                                labelColor = AppTheme.colors.error,
+                                leadingIconContentColor = AppTheme.colors.error
+                            ),
+                            border = BorderStroke(1.dp, AppTheme.colors.error)
+                        )
+                    }
+                }
+            }
+        }
+
+        // 已选标签快速移除
+        AnimatedVisibility(
+            visible = currentFilter.isActive(),
+            enter = fadeIn() + expandVertically(),
+            exit = fadeOut() + shrinkVertically()
+        ) {
+            SelectedFilterTags(
+                filter = currentFilter,
+                onRemoveTag = { filterType, value ->
+                    val newFilter = when (filterType) {
+                        FilterType.COMMENT_TAG -> currentFilter.copy(
+                            commentTags = currentFilter.commentTags - value
+                        )
+
+                        FilterType.RES_NAME -> currentFilter.copy(resName = null)
+                        FilterType.STARS -> currentFilter.copy(
+                            stars = currentFilter.stars - value
+                        )
+
+                        FilterType.START_TIME -> currentFilter.copy(startTime = null)
+                        FilterType.END_TIME -> currentFilter.copy(endTime = null)
+                    }
+                    onFilterChange(newFilter)
+                },
+                modifier = Modifier.padding(top = 8.dp)
+            )
+        }
+    }
+}
+
+private enum class FilterType {
+    COMMENT_TAG, RES_NAME, STARS, START_TIME, END_TIME
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SelectedFilterTags(
+    filter: CommentFilter,
+    onRemoveTag: (FilterType, String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = "已筛选:",
+            style = MaterialTheme.typography.labelMedium,
+            color = AppTheme.colors.hintColor
+        )
+
+        // 评论类型标签
+        filter.commentTags.forEach { tag ->
+            RemovableTag(
+                text = tag,
+                containerColor = AppTheme.colors.primaryColor.copy(0.2f),
+                contentColor = AppTheme.colors.primaryColor,
+                onRemove = { onRemoveTag(FilterType.COMMENT_TAG, tag) }
+            )
+        }
+
+        // 资源标签（单选）
+        filter.resName?.let { name ->
+            RemovableTag(
+                text = name,
+                containerColor = AppTheme.colors.primaryColor.copy(0.2f),
+                contentColor = AppTheme.colors.primaryColor,
+                onRemove = { onRemoveTag(FilterType.RES_NAME, name) }
+            )
+        }
+
+        // 评分标签
+        filter.stars.forEach { star ->
+            RemovableTag(
+                text = "⭐ $star",
+                containerColor = AppTheme.colors.primaryColor.copy(0.2f),
+                contentColor = AppTheme.colors.primaryColor,
+                onRemove = { onRemoveTag(FilterType.STARS, star) }
+            )
+        }
+
+        // 时间标签
+        filter.startTime?.let { time ->
+            RemovableTag(
+                text = "从 ${formatDateShort(time)}",
+                containerColor = AppTheme.colors.primaryColor.copy(0.2f),
+                contentColor = AppTheme.colors.primaryColor,
+                onRemove = { onRemoveTag(FilterType.START_TIME, "") }
+            )
+        }
+
+        filter.endTime?.let { time ->
+            RemovableTag(
+                text = "至 ${formatDateShort(time)}",
+                containerColor = AppTheme.colors.primaryColor.copy(0.2f),
+                contentColor = AppTheme.colors.primaryColor,
+                onRemove = { onRemoveTag(FilterType.END_TIME, "") }
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun RemovableTag(
+    text: String,
+    containerColor: Color,
+    contentColor: Color,
+    onRemove: () -> Unit
+) {
+    InputChip(
+        selected = true,
+        onClick = onRemove,
+        label = {
+            Text(
+                text = text,
+                style = MaterialTheme.typography.labelSmall,
+                maxLines = 1
+            )
+        },
+        trailingIcon = {
+            Icon(
+                painter = painterResource(Res.drawable.ic_close),
+                contentDescription = "移除",
+                modifier = Modifier.size(14.dp)
+            )
+        },
+        colors = InputChipDefaults.inputChipColors(
+            selectedContainerColor = containerColor,
+            selectedLabelColor = contentColor,
+            selectedTrailingIconColor = contentColor
+        ),
+        border = BorderStroke(1.dp, contentColor),
+        modifier = Modifier.height(28.dp)
+    )
+}
+
 // --- 标签 ---
 @Composable
 private fun StatusChip(
@@ -516,7 +935,6 @@ private fun DetailPanelAnimationWrapper(
     }
 }
 
-// 简单的工具函数
 @Preview(widthDp = 1200, heightDp = 800)
 @Composable
 private fun CommentReviewScreenPreview() {

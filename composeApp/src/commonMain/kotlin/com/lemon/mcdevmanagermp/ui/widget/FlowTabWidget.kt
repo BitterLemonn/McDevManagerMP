@@ -18,6 +18,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lemon.mcdevmanagermp.ui.theme.AppTheme
@@ -26,7 +27,6 @@ import com.lt.compose_views.other.HorizontalSpace
 import mcdevmanagermp.composeapp.generated.resources.Res
 import mcdevmanagermp.composeapp.generated.resources.ic_close
 import org.jetbrains.compose.resources.painterResource
-import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 fun FlowTabWidget(

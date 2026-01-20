@@ -2,9 +2,7 @@ package com.lemon.mcdevmanagermp.ui.page
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandIn
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
@@ -42,15 +40,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -62,24 +59,17 @@ import com.lemon.mcdevmanagermp.ui.theme.AppTheme
 import com.lemon.mcdevmanagermp.ui.theme.MCDevManagerTheme
 import com.lemon.mcdevmanagermp.ui.theme.TextWhite
 import com.lemon.mcdevmanagermp.ui.widget.AppLoadingWidget
-import com.lemon.mcdevmanagermp.ui.widget.BottomNameInput
 import com.lemon.mcdevmanagermp.ui.widget.LoginOutlineTextField
 import com.lemon.mcdevmanagermp.ui.widget.SNACK_ERROR
 import com.lemon.mcdevmanagermp.ui.widget.SNACK_INFO
-import com.lemon.mcdevmanagermp.utils.Logger
 import com.lemon.mcdevmanagermp.viewmodel.LoginViewAction
 import com.lemon.mcdevmanagermp.viewmodel.LoginViewEffect
 import com.lemon.mcdevmanagermp.viewmodel.LoginViewModel
-import com.lt.compose_views.util.rememberMutableStateOf
 import mcdevmanagermp.composeapp.generated.resources.Res
 import mcdevmanagermp.composeapp.generated.resources.ic_mc
 import mcdevmanagermp.composeapp.generated.resources.ic_no_show
 import mcdevmanagermp.composeapp.generated.resources.ic_show
-import mcdevmanagermp.composeapp.generated.resources.img_login_bg
-import mcdevmanagermp.composeapp.generated.resources.minecraft_ae
-import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
-import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 fun LoginPageCompact(

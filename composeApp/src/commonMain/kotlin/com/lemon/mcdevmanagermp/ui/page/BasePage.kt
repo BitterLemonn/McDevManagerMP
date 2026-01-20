@@ -1,13 +1,17 @@
 package com.lemon.mcdevmanagermp.ui.page
 
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.lemon.mcdevmanagermp.extension.IUiEffect
 import com.lemon.mcdevmanagermp.extension.collectEffect
+import com.lemon.mcdevmanagermp.getPlatform
 import kotlinx.coroutines.flow.SharedFlow
 
 @Composable

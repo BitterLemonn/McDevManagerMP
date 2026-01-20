@@ -2,6 +2,7 @@ package com.lemon.mcdevmanagermp.data.repository
 
 import com.lemon.mcdevmanagermp.api.CommentApi
 import com.lemon.mcdevmanagermp.data.netease.comment.CommentListBean
+import com.lemon.mcdevmanagermp.data.netease.feedback.ReplyBean
 import com.lemon.mcdevmanagermp.utils.NetworkState
 import com.lemon.mcdevmanagermp.utils.UnifiedExceptionHandler
 
@@ -28,6 +29,18 @@ class CommentRepository {
                 state = state,
                 startDate = startDate,
                 endDate = endDate
+            )
+        }
+    }
+
+    suspend fun replyComment(
+        commentId: String,
+        content: String
+    ): NetworkState<Unit> {
+        return UnifiedExceptionHandler.handleRequest {
+            commentApi.replyComment(
+                commentId = commentId,
+                content = ReplyBean(content)
             )
         }
     }

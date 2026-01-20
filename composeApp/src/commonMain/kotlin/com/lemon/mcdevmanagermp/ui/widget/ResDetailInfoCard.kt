@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lemon.mcdevmanagermp.data.netease.resource.ResDetailBean
@@ -22,7 +23,6 @@ import com.lemon.mcdevmanagermp.ui.theme.AppTheme
 import mcdevmanagermp.composeapp.generated.resources.Res
 import mcdevmanagermp.composeapp.generated.resources.minecraft_ae
 import org.jetbrains.compose.resources.Font
-import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 fun ResDetailInfoCard(
